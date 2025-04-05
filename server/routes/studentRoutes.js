@@ -3,6 +3,8 @@ const router = express.Router();
 const Student = require('../models/Student');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { sendNewStudentNotification } = require('../utils/emailService');
+require('dotenv').config();
 
 // Middleware to verify JWT token
 const auth = (req, res, next) => {
@@ -43,6 +45,19 @@ router.post('/register', async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: '1d' }
     );
+
+    // Send email notification to admin
+    const adminEmail = process.env.ADMIN_EMAIL;
+    if (adminEmail) {
+      // Don't await this call to avoid blocking the response
+      sendNewStudentNotification(student.toObject(), adminEmail)
+        .then(sent => {
+          if (sent) {
+            console.log('✅ Admin notification email sent successfully');
+          }
+        })
+        .catch(err => console.error('Email error:', err));
+    }
 
     // Return student without password and token
     const { password, ...studentData } = student.toObject();

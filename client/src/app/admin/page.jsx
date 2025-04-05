@@ -22,6 +22,7 @@ export default function AdminPage() {
   const [students, setStudents] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [pendingStudents, setPendingStudents] = useState([])
   const [adminProfile, setAdminProfile] = useState({
     name: "Admin User",
     email: "admin@example.com",
@@ -56,6 +57,10 @@ export default function AdminPage() {
         
         const data = await response.json()
         setStudents(data)
+        
+        // Filter students with pending status for notifications
+        const newPendingStudents = data.filter(student => student.status === 'pending');
+        setPendingStudents(newPendingStudents);
         
         // Also try to fetch admin profile
         try {
@@ -150,6 +155,46 @@ export default function AdminPage() {
     }
   }
 
+  const handleStatusChange = async (studentId, newStatus) => {
+    try {
+      const token = localStorage.getItem("admin_token");
+      if (!token) {
+        router.push("/admin/login");
+        return;
+      }
+      
+      const response = await fetch(`http://localhost:5000/api/admins/students/${studentId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to update student status");
+      }
+      
+      // Update the local state with the new data
+      const updatedStudent = await response.json();
+      setStudents(prevStudents => 
+        prevStudents.map(student => 
+          student._id === updatedStudent._id ? updatedStudent : student
+        )
+      );
+      
+      // Update pending students list
+      setPendingStudents(prevPending => 
+        prevPending.filter(student => student._id !== studentId)
+      );
+      
+    } catch (error) {
+      console.error("Error updating student status:", error);
+      setError("Failed to update student status. Please try again.");
+    }
+  };
+
   const filteredStudents = students.filter(
     (student) =>
       student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -160,7 +205,7 @@ export default function AdminPage() {
 
   return (
     <AuthCheck requireAuth adminOnly>
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
         <header className="w-full h-16 border-b border-slate-200 bg-white">
           <div className="px-2 container h-full flex items-center justify-between">
             <Link href="/admin" className="flex items-center space-x-2">
@@ -178,10 +223,10 @@ export default function AdminPage() {
           </div>
         </header>
 
-        <main className="container p-6 lg:p-10">
-          <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold tracking-tight text-slate-800">Admin Dashboard</h1>
-          </div>
+      <main className="container p-6 lg:p-10">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-800">Admin Dashboard</h1>
+        </div>
 
           {error && (
             <div className="mb-6 p-3 bg-amber-50 border border-amber-200 text-amber-700 text-sm rounded-md">
@@ -189,79 +234,85 @@ export default function AdminPage() {
             </div>
           )}
 
-          <Tabs defaultValue="students" className="w-full">
-            <TabsList className="bsg-slate-200 text-slate-700">
+        <Tabs defaultValue="students" className="w-full">
+          <TabsList className="bsg-slate-200 text-slate-700">
               <TabsTrigger className="cursor-pointer" value="students">Students</TabsTrigger>
+              <TabsTrigger className="cursor-pointer" value="notifications">
+                Notifications
+                {pendingStudents.length > 0 && (
+                  <Badge className="ml-2 bg-red-500 text-white">{pendingStudents.length}</Badge>
+                )}
+              </TabsTrigger>
               <TabsTrigger className="cursor-pointer" value="profile">Admin Profile</TabsTrigger>
-            </TabsList>
+          </TabsList>
 
-            <TabsContent value="students" className="mt-6">
+          <TabsContent value="students" className="mt-6">
               <Card className="bg-gray-100 border-slate-200">
-                <CardHeader>
+              <CardHeader>
                   <CardTitle className="text-slate-800">Student Management</CardTitle>
-                  <CardDescription className="text-slate-600">View and manage all registered students</CardDescription>
-                  <div className="relative mts-4">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
-                    <Input
-                      placeholder="Search students..."
-                      className="pl-10 border-sslate-200 focus:border-slate-500"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </div>
-                </CardHeader>
-                <CardContent>
+                <CardDescription className="text-slate-600">View and manage all registered students</CardDescription>
+                <div className="relative mts-4">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
+                  <Input
+                    placeholder="Search students..."
+                    className="pl-10 border-sslate-200 focus:border-slate-500"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+              </CardHeader>
+              <CardContent>
                   {loading ? (
                     <div className="text-center py-8">
                       <p className="text-slate-600">Loading students...</p>
                     </div>
                   ) : (
-                    <Table>
-                      <TableHeader className="bg-slate-50">
-                        <TableRow>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Roll No</TableHead>
-                          <TableHead>Batch</TableHead>
-                          <TableHead>Branch</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
+                <Table>
+                  <TableHeader className="bg-slate-50">
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Roll No</TableHead>
+                      <TableHead>Batch</TableHead>
+                      <TableHead>Branch</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                         {filteredStudents.length > 0 ? (
                           filteredStudents.map((student) => (
                             <TableRow key={student._id}>
-                              <TableCell className="font-medium">
-                                <div className="flex items-center space-x-3">
-                                  <Avatar className="h-8 w-8">
+                          <TableCell className="font-medium">
+                            <div className="flex items-center space-x-3">
+                              <Avatar className="h-8 w-8">
                                     <AvatarFallback className={`flex items-center justify-center text-sm font-bold text-slate-800 ${getAvatarColor(student.name)}`}>
                                       {getInitials(student.name)}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <div>
-                                    <div className="font-medium text-slate-800">{student.name}</div>
-                                    <div className="text-sm text-slate-500">{student.email}</div>
-                                  </div>
-                                </div>
-                              </TableCell>
-                              <TableCell>{student.rollNo}</TableCell>
-                              <TableCell>{student.batch}</TableCell>
-                              <TableCell>{student.branch}</TableCell>
-                              <TableCell>
-                                <Badge
-                                  className={
-                                    student.status === "active"
-                                      ? "bg-green-100 text-green-800"
-                                      : student.status === "pending"
-                                        ? "bg-yellow-100 text-yellow-800"
-                                        : "bg-red-100 text-red-800"
-                                  }
-                                >
-                                  {student.status}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex space-x-2">
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <div className="font-medium text-slate-800">{student.name}</div>
+                                <div className="text-sm text-slate-500">{student.email}</div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>{student.rollNo}</TableCell>
+                          <TableCell>{student.batch}</TableCell>
+                          <TableCell>{student.branch}</TableCell>
+                          <TableCell>
+                            <Badge
+                              className={
+                                student.status === "active"
+                                  ? "bg-green-100 text-green-800"
+                                  : student.status === "pending"
+                                    ? "bg-yellow-100 text-yellow-800"
+                                    : "bg-red-100 text-red-800"
+                              }
+                            >
+                              {student.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex space-x-2">
                                   <select
                                     className="h-8 border border-slate-300 rounded text-sm px-2 text-slate-600"
                                     value={student.status}
@@ -271,96 +322,172 @@ export default function AdminPage() {
                                     <option value="active">Active</option>
                                     <option value="inactive">Inactive</option>
                                   </select>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={6} className="text-center py-8 text-slate-500">
-                              No students found matching your search criteria
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-8 text-slate-500">
+                          No students found matching your search criteria
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
                   )}
                 </CardContent>
               </Card>
             </TabsContent>
 
-            <TabsContent value="profile" className="mt-6">
+            <TabsContent value="notifications" className="mt-6">
               <Card className="bg-white border-slate-200">
                 <CardHeader>
-                  <CardTitle className="text-slate-800">Admin Profile</CardTitle>
-                  <CardDescription className="text-slate-600">Your admin account information</CardDescription>
+                  <CardTitle className="text-slate-800">New Student Registrations</CardTitle>
+                  <CardDescription className="text-slate-600">
+                    Review and manage pending student registrations
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="flex flex-col md:flex-row gap-8">
-                    <div className="flex flex-col items-center space-y-4">
-                      <Avatar className="h-32 w-32 border-4 border-slate-200">
+                <CardContent>
+                  {pendingStudents.length === 0 ? (
+                    <div className="py-8 text-center text-slate-500">
+                      <p>No pending student registrations</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Student</TableHead>
+                            <TableHead>Roll No</TableHead>
+                            <TableHead>Batch</TableHead>
+                            <TableHead>Branch</TableHead>
+                            <TableHead>Registered On</TableHead>
+                            <TableHead>Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {pendingStudents.map((student) => (
+                            <TableRow key={student._id}>
+                              <TableCell>
+                                <div className="flex items-center space-x-3">
+                                  <Avatar className="h-8 w-8">
+                                    <AvatarFallback className={getAvatarColor(student.name)}>
+                                      {getInitials(student.name)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div>
+                                    <div className="font-medium">{student.name}</div>
+                                    <div className="text-sm text-slate-500">{student.email}</div>
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell>{student.rollNo}</TableCell>
+                              <TableCell>{student.batch}</TableCell>
+                              <TableCell>{student.branch}</TableCell>
+                              <TableCell>
+                                {new Date(student.createdAt).toLocaleDateString()}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex space-x-2">
+                                  <Button 
+                                    className="cursor-pointer bg-green-600 hover:bg-green-700" 
+                                    size="sm"
+                                    onClick={() => handleStatusChange(student._id, 'active')}
+                                  >
+                                    Approve
+                                  </Button>
+                                  <Button 
+                                    className="cursor-pointer bg-red-600 hover:bg-red-700" 
+                                    size="sm"
+                                    onClick={() => handleStatusChange(student._id, 'inactive')}
+                                  >
+                                    Reject
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="profile" className="mt-6">
+            <Card className="bg-white border-slate-200">
+              <CardHeader>
+                <CardTitle className="text-slate-800">Admin Profile</CardTitle>
+                <CardDescription className="text-slate-600">Your admin account information</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex flex-col md:flex-row gap-8">
+                  <div className="flex flex-col items-center space-y-4">
+                    <Avatar className="h-32 w-32 border-4 border-slate-200">
                         <AvatarFallback className={`flex items-center justify-center text-2xl font-bold text-slate-800 ${getAvatarColor(adminProfile.name)}`}>
                           {getInitials(adminProfile.name)}
                         </AvatarFallback>
-                      </Avatar>
+                    </Avatar>
+                  </div>
+
+                  <div className="flex-1 space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="adminName" className="text-slate-700">
+                          Name
+                        </Label>
+                          <Input id="adminName" value={adminProfile.name} readOnly className="bg-slate-50 border-slate-200" />
+                      </div>
+                      <div>
+                        <Label htmlFor="adminEmail" className="text-slate-700">
+                          Email
+                        </Label>
+                        <Input
+                          id="adminEmail"
+                            value={adminProfile.email}
+                          readOnly
+                          className="bg-slate-50 border-slate-200"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="adminRole" className="text-slate-700">
+                          Role
+                        </Label>
+                          <Input id="adminRole" value={adminProfile.role} readOnly className="bg-slate-50 border-slate-200" />
+                      </div>
+                      <div>
+                        <Label htmlFor="adminJoined" className="text-slate-700">
+                          Joined Date
+                        </Label>
+                        <Input
+                          id="adminJoined"
+                            value={adminProfile.joinedDate}
+                          readOnly
+                          className="bg-slate-50 border-slate-200"
+                        />
+                      </div>
                     </div>
 
-                    <div className="flex-1 space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="adminName" className="text-slate-700">
-                            Name
-                          </Label>
-                          <Input id="adminName" value={adminProfile.name} readOnly className="bg-slate-50 border-slate-200" />
-                        </div>
-                        <div>
-                          <Label htmlFor="adminEmail" className="text-slate-700">
-                            Email
-                          </Label>
-                          <Input
-                            id="adminEmail"
-                            value={adminProfile.email}
-                            readOnly
-                            className="bg-slate-50 border-slate-200"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="adminRole" className="text-slate-700">
-                            Role
-                          </Label>
-                          <Input id="adminRole" value={adminProfile.role} readOnly className="bg-slate-50 border-slate-200" />
-                        </div>
-                        <div>
-                          <Label htmlFor="adminJoined" className="text-slate-700">
-                            Joined Date
-                          </Label>
-                          <Input
-                            id="adminJoined"
-                            value={adminProfile.joinedDate}
-                            readOnly
-                            className="bg-slate-50 border-slate-200"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="pt-4">
-                        <h3 className="text-lg font-medium text-slate-800 mb-4">Admin Privileges</h3>
-                        <div className="space-y-2">
-                          <div className="flex items-center space-x-2">
+                    <div className="pt-4">
+                      <h3 className="text-lg font-medium text-slate-800 mb-4">Admin Privileges</h3>
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
                             <Badge className="bg-white hover:text-white py-1 text-slate-800">Student Management</Badge>
                             <Badge className="bg-white hover:text-white py-1 text-slate-800">Content Management</Badge>
                             <Badge className="bg-white hover:text-white py-1 text-slate-800">System Settings</Badge>
                           </div>
-                        </div>
                       </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </main>
-      </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </main>
+    </div>
     </AuthCheck>
   )
 }
