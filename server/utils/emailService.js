@@ -1,8 +1,14 @@
-const sgMail = require('@sendgrid/mail');
+const nodemailer = require('nodemailer');
 require('dotenv').config();
 
-// Initialize SendGrid with API key
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+// Create Gmail transporter
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_PASS
+  }
+});
 
 /**
  * Send email to admin about new student registration
@@ -170,23 +176,20 @@ const sendNewStudentNotification = async (studentData, adminEmail) => {
     `;
 
     // Email options
-    const msg = {
+    const mailOptions = {
+      from: '"Connection Folio System" <prashantsh123@gmail.com>',
       to: adminEmail,
-      from: process.env.SENDGRID_FROM_EMAIL || 'notifications@connectionfolio.com',
       subject: '🎓 New Student Registration - Connection Folio',
       html: studentInfo,
     };
 
     // Send email
-    await sgMail.send(msg);
-    console.log('✉️ Email sent successfully to admin');
+    const info = await transporter.sendMail(mailOptions);
+    console.log('✉️ Email sent successfully to admin:', info.messageId);
     
     return true;
   } catch (error) {
     console.error('❌ Email sending failed:', error);
-    if (error.response) {
-      console.error('SendGrid error details:', error.response.body);
-    }
     return false;
   }
 };
