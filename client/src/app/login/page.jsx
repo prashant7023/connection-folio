@@ -23,7 +23,7 @@ export default function LoginPage() {
     
     try {
       // Send login request to backend
-      const response = await fetch('http://localhost:5000/api/students/login', {
+      const response = await fetch('https://connection-folio-1.onrender.com/api/students/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

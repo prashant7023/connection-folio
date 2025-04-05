@@ -45,7 +45,7 @@ export default function AdminRegisterPage() {
     
     try {
       // Send registration request to backend
-      const response = await fetch('http://localhost:5000/api/admins/register', {
+      const response = await fetch('https://connection-folio-1.onrender.com/api/admins/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

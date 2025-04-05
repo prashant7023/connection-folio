@@ -66,7 +66,7 @@ export default function ProfilePage() {
     
     try {
       // Fetch profile from API using token
-      const response = await fetch("http://localhost:5000/api/students/profile", {
+      const response = await fetch("https://connection-folio-1.onrender.com/api/students/profile", {
         headers: {
           "Authorization": `Bearer ${token}`
         }
@@ -117,7 +117,7 @@ export default function ProfilePage() {
       }
       
       // Send updated profile to API
-      const response = await fetch("http://localhost:5000/api/students/profile", {
+      const response = await fetch("https://connection-folio-1.onrender.com/api/students/profile", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

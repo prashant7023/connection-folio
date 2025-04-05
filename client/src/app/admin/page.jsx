@@ -45,7 +45,7 @@ export default function AdminPage() {
         }
         
         // Fetch students from backend
-        const response = await fetch("http://localhost:5000/api/students", {
+        const response = await fetch("https://connection-folio-1.onrender.com/api/students", {
           headers: {
             "Authorization": `Bearer ${token}`
           }
@@ -64,7 +64,7 @@ export default function AdminPage() {
         
         // Also try to fetch admin profile
         try {
-          const profileResponse = await fetch("http://localhost:5000/api/admins/profile", {
+          const profileResponse = await fetch("https://connection-folio-1.onrender.com/api/admins/profile", {
             headers: {
               "Authorization": `Bearer ${token}`
             }
@@ -132,7 +132,7 @@ export default function AdminPage() {
     try {
       const token = localStorage.getItem("admin_token")
       
-      const response = await fetch(`http://localhost:5000/api/admins/students/${studentId}/status`, {
+      const response = await fetch(`https://connection-folio-1.onrender.com/api/admins/students/${studentId}/status`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -163,7 +163,7 @@ export default function AdminPage() {
         return;
       }
       
-      const response = await fetch(`http://localhost:5000/api/admins/students/${studentId}/status`, {
+      const response = await fetch(`https://connection-folio-1.onrender.com/api/admins/students/${studentId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
