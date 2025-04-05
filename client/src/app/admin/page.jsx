@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Search, LogOut } from "lucide-react"
@@ -14,7 +14,7 @@ import { Navbar } from "@/components/navbar"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import AuthCheck from "@/components/auth-check"
-import { getInitials } from "@/utils/auth"
+import { getInitials, getAvatarColor } from "@/utils/auth"
 
 export default function AdminPage() {
   const router = useRouter()
@@ -102,20 +102,10 @@ export default function AdminPage() {
         }
       } catch (err) {
         console.error("Error fetching students:", err)
-        setError("Failed to load students. Using placeholder data.")
+        setError("Failed to load students. Please check your connection and try again.")
         
-        // Use placeholder data if API fails
-        setStudents([
-          {
-            _id: "1",
-            name: "John Doe",
-            email: "john@example.com",
-            rollNo: "21CS1001",
-            batch: "2021-2025",
-            branch: "CSE",
-            status: "active",
-          }
-        ])
+        // Set an empty array instead of using mock data
+        setStudents([])
       } finally {
         setLoading(false)
       }
@@ -172,7 +162,7 @@ export default function AdminPage() {
     <AuthCheck requireAuth adminOnly>
       <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
         <header className="w-full h-16 border-b border-slate-200 bg-white">
-          <div className="container h-full flex items-center justify-between">
+          <div className="px-2 container h-full flex items-center justify-between">
             <Link href="/admin" className="flex items-center space-x-2">
               <div className="h-8 w-8 rounded-full bg-slate-800"></div>
               <span className="text-xl font-bold text-slate-800">Admin Panel</span>
@@ -180,7 +170,7 @@ export default function AdminPage() {
 
             <button 
               onClick={handleLogout}
-              className="flex items-center text-slate-700 text-sm px-3 py-2 rounded-md hover:bg-slate-100"
+              className="cursor-pointer flex items-center text-slate-700 text-sm px-3 py-2 rounded-md hover:bg-slate-100"
             >
               <LogOut className="mr-2 h-4 w-4" />
               Logout
@@ -201,8 +191,8 @@ export default function AdminPage() {
 
           <Tabs defaultValue="students" className="w-full">
             <TabsList className="bsg-slate-200 text-slate-700">
-              <TabsTrigger value="students">Students</TabsTrigger>
-              <TabsTrigger value="profile">Admin Profile</TabsTrigger>
+              <TabsTrigger className="cursor-pointer" value="students">Students</TabsTrigger>
+              <TabsTrigger className="cursor-pointer" value="profile">Admin Profile</TabsTrigger>
             </TabsList>
 
             <TabsContent value="students" className="mt-6">
@@ -244,8 +234,7 @@ export default function AdminPage() {
                               <TableCell className="font-medium">
                                 <div className="flex items-center space-x-3">
                                   <Avatar className="h-8 w-8">
-                                    <AvatarImage src={`/placeholder.svg?height=32&width=32`} alt={student.name} />
-                                    <AvatarFallback className="bg-slate-200 text-slate-700">
+                                    <AvatarFallback className={`flex items-center justify-center text-sm font-bold text-slate-800 ${getAvatarColor(student.name)}`}>
                                       {getInitials(student.name)}
                                     </AvatarFallback>
                                   </Avatar>
@@ -310,8 +299,7 @@ export default function AdminPage() {
                   <div className="flex flex-col md:flex-row gap-8">
                     <div className="flex flex-col items-center space-y-4">
                       <Avatar className="h-32 w-32 border-4 border-slate-200">
-                        <AvatarImage src="/placeholder.svg?height=128&width=128" alt="Admin" />
-                        <AvatarFallback className="text-4xl bg-slate-200 text-slate-700">
+                        <AvatarFallback className={`flex items-center justify-center text-2xl font-bold text-slate-800 ${getAvatarColor(adminProfile.name)}`}>
                           {getInitials(adminProfile.name)}
                         </AvatarFallback>
                       </Avatar>

@@ -76,17 +76,42 @@ export const logoutUser = () => {
 };
 
 /**
- * Get the initials from a name
- * @param {string} name - The name to get initials from
- * @returns {string} The initials (up to first 2 characters)
+ * Get the first character of a name for avatar display
+ * @param {string} name - The name to get initial from
+ * @returns {string} The first character in uppercase
  */
 export const getInitials = (name) => {
   if (!name) return "?";
   
-  return name
-    .split(' ')
-    .map(part => part[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
+  // Just return the first character in uppercase
+  return name.charAt(0).toUpperCase();
+};
+
+/**
+ * Get a consistent color for an avatar based on the name
+ * @param {string} name - The name to derive color from
+ * @returns {string} A background color class
+ */
+export const getAvatarColor = (name) => {
+  if (!name) return "bg-slate-200";
+  
+  // Color palette with lighter colors for better contrast with dark text
+  const colorPalette = [
+    "bg-purple-200",
+    "bg-blue-200",
+    "bg-indigo-200",
+    "bg-pink-200",
+    "bg-cyan-200",
+    "bg-emerald-200",
+    "bg-violet-200",
+    "bg-amber-200",
+    "bg-teal-200",
+    "bg-rose-200",
+  ];
+  
+  // Get consistent index based on the first character of the name
+  const charCode = name.charCodeAt(0) || 65; // Default to 'A' if empty
+  const index = charCode % colorPalette.length;
+  
+  return colorPalette[index];
 }; 

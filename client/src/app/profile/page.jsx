@@ -8,10 +8,11 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Navbar } from "@/components/navbar"
 import AuthCheck from "@/components/auth-check"
-import { getInitials } from "@/utils/auth"
+import { getInitials, getAvatarColor } from "@/utils/auth"
+import { Badge } from "@/components/ui/badge"
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -27,71 +28,81 @@ export default function ProfilePage() {
     bio: "",
     skills: "",
     interests: "",
+    status: "",
   })
+  const [prevStatus, setPrevStatus] = useState("");
+  const [statusChanged, setStatusChanged] = useState(false);
 
   // Load student profile data from API if authenticated
   useEffect(() => {
-    const fetchProfile = async () => {
-      setLoading(true)
-      setError("")
-      
-      // Check if token exists
-      const token = localStorage.getItem("token")
-      
-      if (!token) {
-        // Try to load from localStorage as fallback for offline demo
-        const savedProfile = localStorage.getItem("studentProfile")
-        if (savedProfile) {
-          try {
-            setProfile(JSON.parse(savedProfile))
-          } catch (error) {
-            console.error("Error parsing profile data:", error)
-          }
-        } else {
-          // No token and no local data, redirect to login
-          router.push("/login")
-        }
-        setLoading(false)
-        return
-      }
-      
-      try {
-        // Fetch profile from API using token
-        const response = await fetch("http://localhost:5000/api/students/profile", {
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
-        })
-        
-        if (!response.ok) {
-          throw new Error("Failed to fetch profile")
-        }
-        
-        const data = await response.json()
-        setProfile(data)
-        
-        // Update localStorage copy for offline access
-        localStorage.setItem("studentProfile", JSON.stringify(data))
-      } catch (error) {
-        console.error("Error fetching profile:", error)
-        setError("Failed to load profile data. Using local data if available.")
-        
-        // Try to load from localStorage as fallback
-        const savedProfile = localStorage.getItem("studentProfile")
-        if (savedProfile) {
-          try {
-            setProfile(JSON.parse(savedProfile))
-          } catch (error) {
-            console.error("Error parsing profile data:", error)
-          }
-        }
-      } finally {
-        setLoading(false)
-      }
+    // Initial fetch
+    fetchProfile();
+    
+    // Set up interval to check for status updates every 30 seconds
+    const intervalId = setInterval(() => {
+      fetchProfile(true);
+    }, 30000);
+    
+    // Clean up on unmount
+    return () => clearInterval(intervalId);
+  }, []);
+
+  // Extract fetchProfile logic to a separate function
+  const fetchProfile = async (isBackgroundRefresh = false) => {
+    // Only show loading indicator for initial load, not background refreshes
+    if (!isBackgroundRefresh) {
+      setLoading(true);
+    }
+    setError("");
+    
+    // Check if token exists
+    const token = localStorage.getItem("token");
+    
+    if (!token) {
+      // Redirect to login if not authenticated
+      router.push("/login");
+      return;
     }
     
-    fetchProfile()
-  }, [router])
+    try {
+      // Fetch profile from API using token
+      const response = await fetch("http://localhost:5000/api/students/profile", {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch profile");
+      }
+      
+      const data = await response.json();
+      
+      // Check if status changed from previous fetch
+      if (prevStatus && prevStatus !== data.status) {
+        setStatusChanged(true);
+        // Auto-hide the notification after 5 seconds
+        setTimeout(() => setStatusChanged(false), 5000);
+      }
+      
+      // Update states
+      setPrevStatus(data.status);
+      setProfile(data);
+      
+      // Save profile for offline access
+      localStorage.setItem("studentProfile", JSON.stringify(data));
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+      if (!isBackgroundRefresh) {
+        setError("Failed to load profile data. Please check your connection and try again.");
+        router.push("/login");
+      }
+    } finally {
+      if (!isBackgroundRefresh) {
+        setLoading(false);
+      }
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -170,13 +181,13 @@ export default function ProfilePage() {
             <div className="flex gap-2">
               <Button
                 onClick={() => setIsEditing(!isEditing)}
-                className={isEditing ? "bg-gray-600 hover:bg-gray-700" : "bg-slate-800 hover:bg-slate-700"}
+                className={`cursor-pointer ${isEditing ? "bg-gray-600 hover:bg-gray-700" : "bg-slate-800 hover:bg-slate-700"}`}
               >
                 {isEditing ? "Cancel" : "Edit Profile"}
               </Button>
               <Button 
                 onClick={handleLogout}
-                className="bg-red-600 hover:bg-red-700"
+                className="cursor-pointer bg-red-600 hover:bg-red-700"
               >
                 Logout
               </Button>
@@ -189,8 +200,7 @@ export default function ProfilePage() {
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center space-y-4">
                   <Avatar className="h-32 w-32 border-4 border-slate-200">
-                    <AvatarImage src="/placeholder.svg?height=128&width=128" alt={profile.name} />
-                    <AvatarFallback className="text-4xl bg-slate-200 text-slate-700">
+                    <AvatarFallback className={`flex items-center justify-center text-2xl font-bold text-slate-800 ${getAvatarColor(profile.name)}`}>
                       {getInitials(profile.name)}
                     </AvatarFallback>
                   </Avatar>
@@ -199,6 +209,17 @@ export default function ProfilePage() {
                     <p className="text-slate-600">{profile.rollNo}</p>
                     <p className="text-slate-600">{profile.branch}</p>
                     <p className="text-slate-600">{profile.batch}</p>
+                    <div className="mt-2">
+                      <Badge className={
+                        profile.status === "active" ? "bg-green-100 text-green-800" :
+                        profile.status === "pending" ? "bg-yellow-100 text-yellow-800" :
+                        "bg-red-100 text-red-800"
+                      }>
+                        {profile.status === "active" ? "Account Active" :
+                         profile.status === "pending" ? "Approval Pending" :
+                         "Account Inactive"}
+                      </Badge>
+                    </div>
                   </div>
                   <div className="w-full pt-4 border-t border-slate-200">
                     <h3 className="font-medium text-slate-700 mb-2">Contact</h3>
@@ -252,7 +273,7 @@ export default function ProfilePage() {
                       </div>
                       <Button 
                         type="submit" 
-                        className="w-full bg-slate-800 hover:bg-slate-700"
+                        className="cursor-pointer w-full bg-slate-800 hover:bg-slate-700"
                         disabled={loading}
                       >
                         {loading ? "Saving..." : "Save Profile"}
@@ -261,9 +282,9 @@ export default function ProfilePage() {
                   </form>
                 ) : (
                   <Tabs defaultValue="academic" className="w-full">
-                    <TabsList className="bg-slate-100 text-slate-700">
-                      <TabsTrigger value="academic">Academic</TabsTrigger>
-                      <TabsTrigger value="about">About</TabsTrigger>
+                    <TabsList className="cursor-pointer bg-slate-100 text-slate-700">
+                      <TabsTrigger value="academic" className="cursor-pointer">Academic</TabsTrigger>
+                      <TabsTrigger value="about" className="cursor-pointer">About</TabsTrigger>
                     </TabsList>
                     <TabsContent value="academic" className="mt-6 space-y-4">
                       <div>
@@ -277,6 +298,21 @@ export default function ProfilePage() {
                       <div>
                         <h3 className="text-lg font-medium text-slate-800 mb-2">Roll Number</h3>
                         <p className="text-slate-700">{profile.rollNo}</p>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-medium text-slate-800 mb-2">Account Status</h3>
+                        <div className="flex items-center">
+                          <div className={`h-3 w-3 rounded-full mr-2 ${
+                            profile.status === "active" ? "bg-green-500" :
+                            profile.status === "pending" ? "bg-yellow-500" :
+                            "bg-red-500"
+                          }`}></div>
+                          <p className="text-slate-700">
+                            {profile.status === "active" ? "Your account is active" :
+                             profile.status === "pending" ? "Your account is pending approval" :
+                             "Your account is currently inactive"}
+                          </p>
+                        </div>
                       </div>
                     </TabsContent>
                     <TabsContent value="about" className="mt-6 space-y-4">
@@ -298,6 +334,15 @@ export default function ProfilePage() {
               </CardContent>
             </Card>
           </div>
+
+          {statusChanged && (
+            <div className="fixed top-20 right-4 bg-blue-500 text-white p-4 rounded-md shadow-lg z-50 animate-pulse">
+              <p className="font-medium">Your account status has been updated!</p>
+              <p>New status: {profile.status === "active" ? "Active" : 
+                             profile.status === "pending" ? "Pending Approval" : 
+                             "Inactive"}</p>
+            </div>
+          )}
         </main>
       </div>
     </AuthCheck>

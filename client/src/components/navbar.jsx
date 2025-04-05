@@ -26,7 +26,7 @@ export function Navbar() {
 
         <button 
           onClick={handleLogout}
-          className="flex items-center text-slate-700 text-sm px-3 py-2 rounded-md hover:bg-slate-100"
+          className="cursor-pointer flex items-center text-slate-700 text-sm px-3 py-2 rounded-md hover:bg-slate-100"
         >
           <LogOut className="mr-2 h-4 w-4" />
           Logout

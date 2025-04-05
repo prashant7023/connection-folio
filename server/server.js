@@ -22,6 +22,16 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Server error' });
 });
 
-// Connect and run
-connectDB();
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+// Connect to database and start server
+const startServer = async () => {
+  const dbConnected = await connectDB();
+  
+  if (!dbConnected) {
+    console.error('🛑 Server startup failed due to database connection issue');
+    process.exit(1);
+  }
+  
+  app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+};
+
+startServer();
