@@ -191,7 +191,7 @@ export default function AdminRegisterPage() {
             <CardFooter className="flex flex-col space-y-4">
               <button 
                 type="submit" 
-                className="w-full px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-md"
+                className="cursor-pointer w-full px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-md"
                 disabled={loading}
               >
                 {loading ? "Registering..." : "Register Admin"}
