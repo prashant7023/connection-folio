@@ -1,7 +1,7 @@
 // List of authorized emails that can create admin accounts
 const AUTHORIZED_ADMIN_EMAILS = [
   'prahantsh123@gmail.com',
-  'prahantsh7014@gmail.com',
+  'prashantsh7014@gmail.com',
   // Add more emails here if needed in the future
 ];
 

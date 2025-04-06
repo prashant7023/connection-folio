@@ -477,7 +477,7 @@ export default function AdminPage() {
                             <Badge className="bg-white hover:text-white py-1 text-slate-800">Student Management</Badge>
                             <Badge className="bg-white hover:text-white py-1 text-slate-800">Content Management</Badge>
                             <Badge className="bg-white hover:text-white py-1 text-slate-800">System Settings</Badge>
-                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
