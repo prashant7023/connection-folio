@@ -79,9 +79,6 @@ adminSchema.set('toJSON', {
   }
 });
 
-// Add indexes for better performance
-adminSchema.index({ email: 1 }, { unique: true });
-
 // Create the model
 const Admin = mongoose.model('Admin', adminSchema);
 

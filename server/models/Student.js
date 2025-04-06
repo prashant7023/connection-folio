@@ -19,7 +19,6 @@ const studentSchema = new mongoose.Schema({
 });
 
 // Create indexes for frequently queried fields
-studentSchema.index({ email: 1 }, { unique: true });
 studentSchema.index({ rollNo: 1 }, { unique: true });
 studentSchema.index({ branch: 1 });
 studentSchema.index({ batch: 1 });
