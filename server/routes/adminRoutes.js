@@ -4,6 +4,7 @@ const Admin = require('../models/Admin');
 const Student = require('../models/Student');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { sendStudentApprovalEmail } = require('../utils/emailService');
 require('dotenv').config();
 
 // Middleware to verify admin JWT token
@@ -183,8 +184,19 @@ router.put('/students/:id/status', adminAuth, async (req, res) => {
       return res.status(404).json({ error: 'Student not found' });
     }
 
+    // Send email notification to student
+    try {
+      console.log(`🔔 Sending status update email to student: ${student.email}`);
+      await sendStudentApprovalEmail(student);
+      console.log(`✅ Status update email sent successfully to ${student.email}`);
+    } catch (emailError) {
+      // Log the error but don't fail the status update if email fails
+      console.error(`❌ Failed to send status update email: ${emailError.message}`);
+    }
+
     res.json(student);
   } catch (err) {
+    console.error('Error updating student status:', err);
     res.status(400).json({ error: err.message });
   }
 });
