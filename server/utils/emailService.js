@@ -163,7 +163,7 @@ const sendNewStudentNotification = async (studentData, adminEmail) => {
           </div>
           
           <div style="text-align: center; margin-top: 30px;">
-            <a href="http://localhost:3000/admin" class="button">Review in Admin Panel</a>
+            <a href="https://connection-folio.vercel.app/admin" class="button">Review in Admin Panel</a>
           </div>
           
           <div class="footer">
@@ -365,7 +365,7 @@ const sendStudentApprovalEmail = async (studentData) => {
           </div>
           
           <div style="text-align: center; margin-top: 30px;">
-            <a href="http://localhost:3000/profile" class="button">Go to Your Profile</a>
+            <a href="https://connection-folio.vercel.app/profile" class="button">Go to Your Profile</a>
           </div>
           
           <div class="footer">
