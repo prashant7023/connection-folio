@@ -102,7 +102,7 @@ export default function AdminPage() {
         }
 
         // Fetch students from backend
-        const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API_URL || process.env.SERVER_API_URL}/api/students`, {
+        const response = await fetch(`https://connection-folio-1.onrender.com/api/students`, {
           headers: {
             "Authorization": `Bearer ${token}`
           }

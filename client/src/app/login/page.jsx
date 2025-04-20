@@ -36,7 +36,7 @@ export default function LoginPage() {
     
     try {
       // Send login request to backend
-      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API_URL || process.env.SERVER_API_URL}/api/students/login`, {
+      const response = await fetch(`https://connection-folio-1.onrender.com/api/students/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

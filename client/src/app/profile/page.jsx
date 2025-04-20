@@ -130,7 +130,7 @@ export default function ProfilePage() {
       }
       
       // Send updated profile to API
-      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API_URL || process.env.SERVER_API_URL}/api/students/profile`, {
+      const response = await fetch(`https://connection-folio-1.onrender.com/api/students/profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

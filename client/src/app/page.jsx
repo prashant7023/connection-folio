@@ -37,7 +37,7 @@ export default function Home() {
       const fetchAnnouncements = async () => {
         try {
           const response = await fetch(
-            `${process.env.NEXT_PUBLIC_SERVER_API_URL || process.env.SERVER_API_URL}/api/announcements`,
+            `https://connection-folio-1.onrender.com/api/announcements`,
           )
 
           if (!response.ok) {

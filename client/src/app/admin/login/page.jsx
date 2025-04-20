@@ -23,7 +23,7 @@ export default function AdminLoginPage() {
     
     try {
       // Send admin login request to backend
-      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API_URL}/api/admins/login`, {
+      const response = await fetch(`https://connection-folio-1.onrender.com/api/admins/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
