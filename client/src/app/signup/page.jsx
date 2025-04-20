@@ -52,7 +52,7 @@ export default function SignupPage() {
       }
       
       // Send registration request to backend
-      const response = await fetch('`SERVER_API_URL`/api/students/register', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API_URL}/api/students/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
