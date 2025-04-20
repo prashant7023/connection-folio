@@ -70,7 +70,7 @@ export default function AdminSignupPage() {
     
     try {
       // Send registration request to backend
-      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API_URL || process.env.SERVER_API_URL}/api/admins/register`, {
+      const response = await fetch(`https://connection-folio-1.onrender.com/api/admins/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -121,7 +121,7 @@ export default function AdminPage() {
 
         // Also try to fetch admin profile
         try {
-          const profileResponse = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API_URL || process.env.SERVER_API_URL}/api/admins/profile`, {
+          const profileResponse = await fetch(`https://connection-folio-1.onrender.com/api/admins/profile`, {
             headers: {
               "Authorization": `Bearer ${token}`
             }
@@ -183,7 +183,7 @@ export default function AdminPage() {
         const token = localStorage.getItem("admin_token");
         if (!token) return;
 
-        const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API_URL || process.env.SERVER_API_URL}/api/announcements/admin`, {
+        const response = await fetch(`https://connection-folio-1.onrender.com/api/announcements/admin`, {
           headers: {
             "Authorization": `Bearer ${token}`
           }
@@ -223,7 +223,7 @@ export default function AdminPage() {
       
       console.log(`Updating student ${studentId} status to: ${newStatus}`);
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API_URL || process.env.SERVER_API_URL}/api/admins/students/${studentId}/status`, {
+      const response = await fetch(`https://connection-folio-1.onrender.com/api/admins/students/${studentId}/status`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -270,7 +270,7 @@ export default function AdminPage() {
       
       console.log(`Changing student ${studentId} status to: ${newStatus}`);
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API_URL || process.env.SERVER_API_URL}/api/admins/students/${studentId}/status`, {
+      const response = await fetch(`https://connection-folio-1.onrender.com/api/admins/students/${studentId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -425,7 +425,7 @@ export default function AdminPage() {
       }
       
       // Send the announcement to the API
-      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API_URL || process.env.SERVER_API_URL}/api/announcements`, {
+      const response = await fetch(`https://connection-folio-1.onrender.com/api/announcements`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -476,7 +476,7 @@ export default function AdminPage() {
       }
       
       // Delete the announcement via API
-      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API_URL || process.env.SERVER_API_URL}/api/announcements/${id}`, {
+      const response = await fetch(`https://connection-folio-1.onrender.com/api/announcements/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

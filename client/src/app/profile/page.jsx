@@ -66,7 +66,7 @@ export default function ProfilePage() {
     
     try {
       // Fetch profile from API using token
-      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API_URL || process.env.SERVER_API_URL}/api/students/profile`, {
+      const response = await fetch(`https://connection-folio-1.onrender.com/api/students/profile`, {
         headers: {
           "Authorization": `Bearer ${token}`
         }

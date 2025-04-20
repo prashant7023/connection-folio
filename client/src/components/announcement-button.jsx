@@ -14,7 +14,7 @@ export default function AnnouncementButton() {
     const checkAnnouncements = async () => {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_API_URL || process.env.SERVER_API_URL}/api/announcements`,
+          `https://connection-folio-1.onrender.com/api/announcements`,
         )
 
         if (!response.ok) {
@@ -36,7 +36,7 @@ export default function AnnouncementButton() {
     const checkInterval = setInterval(async () => {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_API_URL || process.env.SERVER_API_URL}/api/announcements`,
+          `https://connection-folio-1.onrender.com/api/announcements`,
         )
 
         if (!response.ok) {
