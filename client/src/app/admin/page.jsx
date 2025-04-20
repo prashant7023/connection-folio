@@ -4,35 +4,27 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Search, LogOut, ChevronDown, ArrowUpDown, Megaphone, Trash2, Info, AlertTriangle, CheckCircle, X } from "lucide-react"
-import { Navbar } from "@/components/navbar"
+import { LogOut, ChevronDown, ArrowUpDown, Megaphone, Trash2, Info, AlertTriangle, CheckCircle, X } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import Link from "next/link"
 import AuthCheck from "@/components/auth-check"
 import { getInitials, getAvatarColor } from "@/utils/auth"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { BsSearch, BsCheck, BsChevronRight, BsArrowUp, BsArrowDown } from "react-icons/bs"
-import { IoIosArrowDown, IoIosArrowForward } from "react-icons/io"
-import { FiFilter, FiChevronRight } from "react-icons/fi"
+import { FiFilter } from "react-icons/fi"
 
 export default function AdminPage() {
   const router = useRouter()
@@ -41,7 +33,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [pendingStudents, setPendingStudents] = useState([])
-  const [activeTab, setActiveTab] = useState("students")
+  const [activeTab, setActiveTab] = useState("notifications")
   const [isDropdownVisible, setIsDropdownVisible] = useState(false)
   const [filterType, setFilterType] = useState("all")
   const [filterValue, setFilterValue] = useState("")
@@ -49,19 +41,19 @@ export default function AdminPage() {
     name: "Admin User",
     email: "admin@example.com",
     role: "Super Admin",
-    joinedDate: "Jan 15, 2023"
+    joinedDate: "Jan 15, 2023",
   })
   const [sortField, setSortField] = useState("name")
   const [sortOrder, setSortOrder] = useState("asc")
   const [showDropdown, setShowDropdown] = useState(false)
   const [activeDrowdown, setActiveDrowdown] = useState(null)
-  
+
   // Announcements state
   const [announcements, setAnnouncements] = useState([])
   const [newAnnouncement, setNewAnnouncement] = useState({
     title: "",
     message: "",
-    type: "info" // info, warning, success, error
+    type: "info", // info, warning, success, error
   })
   const [announcementLoading, setAnnouncementLoading] = useState(false)
 
@@ -69,23 +61,28 @@ export default function AdminPage() {
   useEffect(() => {
     // Function to handle hash changes
     const handleHashChange = () => {
-      const hash = window.location.hash.replace('#', '');
-      if (hash === 'students' || hash === 'notifications' || hash === 'admin') {
-        setActiveTab(hash);
+      const hash = window.location.hash.replace("#", "")
+      if (hash === "notifications" || hash === "students" || hash === "admin" || hash === "announcements") {
+        setActiveTab(hash)
+      } else if (!hash) {
+        // If no hash is present, default to notifications
+        setActiveTab("notifications")
+        // Optionally update the URL hash to match
+        window.location.hash = "notifications"
       }
-    };
+    }
 
     // Initial check
-    handleHashChange();
+    handleHashChange()
 
     // Add listener for hash changes
-    window.addEventListener('hashchange', handleHashChange);
+    window.addEventListener("hashchange", handleHashChange)
 
     // Cleanup
     return () => {
-      window.removeEventListener('hashchange', handleHashChange);
-    };
-  }, []);
+      window.removeEventListener("hashchange", handleHashChange)
+    }
+  }, [])
 
   // Fetch students on component mount
   useEffect(() => {
@@ -104,8 +101,8 @@ export default function AdminPage() {
         // Fetch students from backend
         const response = await fetch(`https://connection-folio-1.onrender.com/api/students`, {
           headers: {
-            "Authorization": `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         })
 
         if (!response.ok) {
@@ -116,15 +113,15 @@ export default function AdminPage() {
         setStudents(data)
 
         // Filter students with pending status for notifications
-        const newPendingStudents = data.filter(student => student.status === 'pending');
-        setPendingStudents(newPendingStudents);
+        const newPendingStudents = data.filter((student) => student.status === "pending")
+        setPendingStudents(newPendingStudents)
 
         // Also try to fetch admin profile
         try {
           const profileResponse = await fetch(`https://connection-folio-1.onrender.com/api/admins/profile`, {
             headers: {
-              "Authorization": `Bearer ${token}`
-            }
+              Authorization: `Bearer ${token}`,
+            },
           })
 
           if (profileResponse.ok) {
@@ -133,11 +130,11 @@ export default function AdminPage() {
               name: profileData.name || "Admin User",
               email: profileData.email || "admin@example.com",
               role: profileData.role || "Admin",
-              joinedDate: new Date(profileData.createdAt).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-              })
+              joinedDate: new Date(profileData.createdAt).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              }),
             })
           }
         } catch (profileError) {
@@ -151,11 +148,11 @@ export default function AdminPage() {
                 name: parsedProfile.name || "Admin User",
                 email: parsedProfile.email || "admin@example.com",
                 role: parsedProfile.role || "Admin",
-                joinedDate: new Date(parsedProfile.createdAt).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'short',
-                  day: 'numeric'
-                })
+                joinedDate: new Date(parsedProfile.createdAt).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                }),
               })
             } catch (e) {
               console.error("Error parsing admin profile:", e)
@@ -180,29 +177,29 @@ export default function AdminPage() {
   useEffect(() => {
     const fetchAnnouncements = async () => {
       try {
-        const token = localStorage.getItem("admin_token");
-        if (!token) return;
+        const token = localStorage.getItem("admin_token")
+        if (!token) return
 
         const response = await fetch(`https://connection-folio-1.onrender.com/api/announcements/admin`, {
           headers: {
-            "Authorization": `Bearer ${token}`
-          }
-        });
+            Authorization: `Bearer ${token}`,
+          },
+        })
 
         if (!response.ok) {
-          throw new Error("Failed to fetch announcements");
+          throw new Error("Failed to fetch announcements")
         }
 
-        const data = await response.json();
-        setAnnouncements(data);
+        const data = await response.json()
+        setAnnouncements(data)
       } catch (err) {
-        console.error("Error loading announcements:", err);
-        setAnnouncements([]);
+        console.error("Error loading announcements:", err)
+        setAnnouncements([])
       }
-    };
+    }
 
-    fetchAnnouncements();
-  }, []);
+    fetchAnnouncements()
+  }, [])
 
   const handleLogout = () => {
     // Clear admin tokens and data
@@ -217,42 +214,38 @@ export default function AdminPage() {
     try {
       const token = localStorage.getItem("admin_token")
       if (!token) {
-        router.push("/admin/login");
-        return;
+        router.push("/admin/login")
+        return
       }
-      
-      console.log(`Updating student ${studentId} status to: ${newStatus}`);
-      
+
+      console.log(`Updating student ${studentId} status to: ${newStatus}`)
+
       const response = await fetch(`https://connection-folio-1.onrender.com/api/admins/students/${studentId}/status`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ status: newStatus })
+        body: JSON.stringify({ status: newStatus }),
       })
-      
+
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Error response:", errorData);
+        const errorData = await response.json()
+        console.error("Error response:", errorData)
         throw new Error(errorData.error || "Failed to update student status")
       }
-      
+
       // Get the updated student data
-      const updatedStudent = await response.json();
-      
+      const updatedStudent = await response.json()
+
       // Update the local state with the new data
-      setStudents(prevStudents => 
-        prevStudents.map(student => 
-          student._id === updatedStudent._id ? updatedStudent : student
-        )
-      );
-      
+      setStudents((prevStudents) =>
+        prevStudents.map((student) => (student._id === updatedStudent._id ? updatedStudent : student)),
+      )
+
       // If it was a pending student that got updated, refresh the pending list
-      if (pendingStudents.some(student => student._id === studentId)) {
-        setPendingStudents(prevPending => 
-          prevPending.filter(student => student._id !== studentId)
-        );
+      if (pendingStudents.some((student) => student._id === studentId)) {
+        setPendingStudents((prevPending) => prevPending.filter((student) => student._id !== studentId))
       }
     } catch (err) {
       console.error("Error updating student status:", err)
@@ -262,51 +255,46 @@ export default function AdminPage() {
 
   const handleStatusChange = async (studentId, newStatus) => {
     try {
-      const token = localStorage.getItem("admin_token");
+      const token = localStorage.getItem("admin_token")
       if (!token) {
-        router.push("/admin/login");
-        return;
+        router.push("/admin/login")
+        return
       }
-      
-      console.log(`Changing student ${studentId} status to: ${newStatus}`);
-      
+
+      console.log(`Changing student ${studentId} status to: ${newStatus}`)
+
       const response = await fetch(`https://connection-folio-1.onrender.com/api/admins/students/${studentId}/status`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ status: newStatus })
-      });
-      
+        body: JSON.stringify({ status: newStatus }),
+      })
+
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Error response:", errorData);
-        throw new Error(errorData.error || "Failed to update student status");
+        const errorData = await response.json()
+        console.error("Error response:", errorData)
+        throw new Error(errorData.error || "Failed to update student status")
       }
-      
+
       // Update the local state with the new data
-      const updatedStudent = await response.json();
-      setStudents(prevStudents => 
-        prevStudents.map(student => 
-          student._id === updatedStudent._id ? updatedStudent : student
-        )
-      );
-      
+      const updatedStudent = await response.json()
+      setStudents((prevStudents) =>
+        prevStudents.map((student) => (student._id === updatedStudent._id ? updatedStudent : student)),
+      )
+
       // Update pending students list
-      setPendingStudents(prevPending => 
-        prevPending.filter(student => student._id !== studentId)
-      );
-      
+      setPendingStudents((prevPending) => prevPending.filter((student) => student._id !== studentId))
     } catch (error) {
-      console.error("Error updating student status:", error);
-      setError("Failed to update student status. Please try again.");
+      console.error("Error updating student status:", error)
+      setError("Failed to update student status. Please try again.")
     }
-  };
+  }
 
   // Get unique batches, branches and status options for filters
-  const uniqueBatches = [...new Set(students.map(student => student.batch))].sort()
-  const uniqueBranches = [...new Set(students.map(student => student.branch))].sort()
+  const uniqueBatches = [...new Set(students.map((student) => student.batch))].sort()
+  const uniqueBranches = [...new Set(students.map((student) => student.branch))].sort()
   const statusOptions = ["approved", "pending", "blocked", "kyc"]
 
   // Handle filter selection
@@ -319,182 +307,198 @@ export default function AdminPage() {
 
   const handleSort = (field) => {
     if (sortField === field) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc")
     } else {
-      setSortField(field);
-      setSortOrder("asc");
+      setSortField(field)
+      setSortOrder("asc")
     }
-    setIsDropdownVisible(false);
-  };
+    setIsDropdownVisible(false)
+  }
 
   // Filter students based on search term and filter type
-  const filteredStudents = students.filter((student) => {
-    // Apply search filter
-    const searchMatch = 
-      searchTerm === "" ||
-      student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.rollNumber?.toLowerCase().includes(searchTerm.toLowerCase());
-      
-    // Apply category filter
-    let categoryMatch = true;
-    if (filterType !== "all") {
-      if (filterType === "status") {
-        categoryMatch = student[filterType] === filterValue;
-      } else {
-        categoryMatch = student[filterType]?.toLowerCase() === filterValue.toLowerCase();
+  const filteredStudents = students
+    .filter((student) => {
+      // Apply search filter
+      const searchMatch =
+        searchTerm === "" ||
+        student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.rollNumber?.toLowerCase().includes(searchTerm.toLowerCase())
+
+      // Apply category filter
+      let categoryMatch = true
+      if (filterType !== "all") {
+        if (filterType === "status") {
+          categoryMatch = student[filterType] === filterValue
+        } else {
+          categoryMatch = student[filterType]?.toLowerCase() === filterValue.toLowerCase()
+        }
       }
-    }
-    
-    return searchMatch && categoryMatch;
-  }).sort((a, b) => {
-    const aValue = a[sortField] || '';
-    const bValue = b[sortField] || '';
-    
-    // Check if values are strings
-    const aIsString = typeof aValue === 'string';
-    const bIsString = typeof bValue === 'string';
-    
-    // If both are strings, use localeCompare for proper string comparison
-    if (aIsString && bIsString) {
-      return sortOrder === 'asc' 
-        ? aValue.localeCompare(bValue)
-        : bValue.localeCompare(aValue);
-    }
-    
-    // Otherwise use regular comparison
-    return sortOrder === 'asc'
-      ? (aValue > bValue ? 1 : -1)
-      : (aValue < bValue ? 1 : -1);
-  });
-  
+
+      return searchMatch && categoryMatch
+    })
+    .sort((a, b) => {
+      const aValue = a[sortField] || ""
+      const bValue = b[sortField] || ""
+
+      // Check if values are strings
+      const aIsString = typeof aValue === "string"
+      const bIsString = typeof bValue === "string"
+
+      // If both are strings, use localeCompare for proper string comparison
+      if (aIsString && bIsString) {
+        return sortOrder === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue)
+      }
+
+      // Otherwise use regular comparison
+      return sortOrder === "asc" ? (aValue > bValue ? 1 : -1) : aValue < bValue ? 1 : -1
+    })
+
   // Sort students based on selected field and order
   const sortedStudents = [...filteredStudents].sort((a, b) => {
-    const aValue = a[sortField] || "";
-    const bValue = b[sortField] || "";
-    
-    if (typeof aValue === 'string' && typeof bValue === 'string') {
-      return sortOrder === 'asc' 
-        ? aValue.localeCompare(bValue) 
-        : bValue.localeCompare(aValue);
+    const aValue = a[sortField] || ""
+    const bValue = b[sortField] || ""
+
+    if (typeof aValue === "string" && typeof bValue === "string") {
+      return sortOrder === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue)
     } else {
-      return sortOrder === 'asc' 
-        ? (aValue > bValue ? 1 : -1) 
-        : (aValue < bValue ? 1 : -1);
+      return sortOrder === "asc" ? (aValue > bValue ? 1 : -1) : aValue < bValue ? 1 : -1
     }
-  });
+  })
 
   // Sort pending students based on selected field and order
   const sortedPendingStudents = [...pendingStudents].sort((a, b) => {
-    let aValue = a[filterType === 'all' ? 'name' : filterType === 'batch' ? 'batch' : filterType === 'branch' ? 'branch' : filterType === 'status' ? 'status' : 'name'];
-    let bValue = b[filterType === 'all' ? 'name' : filterType === 'batch' ? 'batch' : filterType === 'branch' ? 'branch' : filterType === 'status' ? 'status' : 'name'];
-    
+    let aValue =
+      a[
+        filterType === "all"
+          ? "name"
+          : filterType === "batch"
+            ? "batch"
+            : filterType === "branch"
+              ? "branch"
+              : filterType === "status"
+                ? "status"
+                : "name"
+      ]
+    let bValue =
+      b[
+        filterType === "all"
+          ? "name"
+          : filterType === "batch"
+            ? "batch"
+            : filterType === "branch"
+              ? "branch"
+              : filterType === "status"
+                ? "status"
+                : "name"
+      ]
+
     // Handle special case for status to ensure consistent ordering
-    if (filterType === 'status') {
-      const statusOrder = { 'approved': 1, 'pending': 2, 'kyc': 3, 'block': 4 };
-      aValue = statusOrder[a.status] || 5; // Default to end if unknown
-      bValue = statusOrder[b.status] || 5;
+    if (filterType === "status") {
+      const statusOrder = { approved: 1, pending: 2, kyc: 3, block: 4 }
+      aValue = statusOrder[a.status] || 5 // Default to end if unknown
+      bValue = statusOrder[b.status] || 5
     }
-    
+
     // Handle potential null or undefined values
-    if (aValue === undefined || aValue === null) return filterType === 'asc' ? -1 : 1;
-    if (bValue === undefined || bValue === null) return filterType === 'asc' ? 1 : -1;
-    
+    if (aValue === undefined || aValue === null) return filterType === "asc" ? -1 : 1
+    if (bValue === undefined || bValue === null) return filterType === "asc" ? 1 : -1
+
     // Compare the values
-    if (aValue < bValue) return filterType === 'asc' ? -1 : 1;
-    if (aValue > bValue) return filterType === 'asc' ? 1 : -1;
-    return 0;
-  });
+    if (aValue < bValue) return filterType === "asc" ? -1 : 1
+    if (aValue > bValue) return filterType === "asc" ? 1 : -1
+    return 0
+  })
 
   // Handle creating a new announcement
   const handleAnnouncementSubmit = async (e) => {
-    e.preventDefault();
-    
+    e.preventDefault()
+
     if (!newAnnouncement.title || !newAnnouncement.message) {
-      setError("Title and message are required for announcements");
-      return;
+      setError("Title and message are required for announcements")
+      return
     }
-    
-    setAnnouncementLoading(true);
-    
+
+    setAnnouncementLoading(true)
+
     try {
-      const token = localStorage.getItem("admin_token");
+      const token = localStorage.getItem("admin_token")
       if (!token) {
-        router.push("/admin/login");
-        return;
+        router.push("/admin/login")
+        return
       }
-      
+
       // Send the announcement to the API
       const response = await fetch(`https://connection-folio-1.onrender.com/api/announcements`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           title: newAnnouncement.title,
           message: newAnnouncement.message,
-          type: newAnnouncement.type
-        })
-      });
-      
+          type: newAnnouncement.type,
+        }),
+      })
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create announcement');
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to create announcement")
       }
-      
+
       // Get the created announcement
-      const createdAnnouncement = await response.json();
-      
+      const createdAnnouncement = await response.json()
+
       // Update state with the new announcement
-      setAnnouncements([createdAnnouncement, ...announcements]);
-      
+      setAnnouncements([createdAnnouncement, ...announcements])
+
       // Reset form
       setNewAnnouncement({
         title: "",
         message: "",
-        type: "info"
-      });
-      
+        type: "info",
+      })
+
       // Show confirmation
-      setError("");
+      setError("")
     } catch (err) {
-      console.error("Error creating announcement:", err);
-      setError("Failed to create announcement. Please try again.");
+      console.error("Error creating announcement:", err)
+      setError("Failed to create announcement. Please try again.")
     } finally {
-      setAnnouncementLoading(false);
+      setAnnouncementLoading(false)
     }
-  };
+  }
 
   // Handle deleting an announcement
   const handleDeleteAnnouncement = async (id) => {
     try {
-      const token = localStorage.getItem("admin_token");
+      const token = localStorage.getItem("admin_token")
       if (!token) {
-        router.push("/admin/login");
-        return;
+        router.push("/admin/login")
+        return
       }
-      
+
       // Delete the announcement via API
       const response = await fetch(`https://connection-folio-1.onrender.com/api/announcements/${id}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete announcement');
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to delete announcement")
       }
-      
+
       // Update state by filtering out the deleted announcement
-      setAnnouncements(announcements.filter(a => a._id !== id));
+      setAnnouncements(announcements.filter((a) => a._id !== id))
     } catch (err) {
-      console.error("Error deleting announcement:", err);
-      setError("Failed to delete announcement. Please try again.");
+      console.error("Error deleting announcement:", err)
+      setError("Failed to delete announcement. Please try again.")
     }
-  };
+  }
 
   return (
     <AuthCheck requireAuth adminOnly>
@@ -511,11 +515,28 @@ export default function AdminPage() {
               <div className="hidden md:block mr-4">
                 <TabsList className="bg-slate-100">
                   <TabsTrigger
+                    className="cursor-pointer px-3 py-1 rounded-md transition-all 
+             data-[state=active]:bg-white 
+             data-[state=active]:text-black 
+             data-[state=inactive]:text-gray-500"
+                    value="notifications"
+                    data-state={activeTab === "notifications" ? "active" : "inactive"}
+                    onClick={() => {
+                      setActiveTab("notifications")
+                      window.location.hash = "notifications"
+                    }}
+                  >
+                    Notifications
+                    {pendingStudents.length > 0 && (
+                      <Badge className="ml-2 bg-red-500 text-white">{pendingStudents.length}</Badge>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger
                     value="students"
                     data-state={activeTab === "students" ? "active" : "inactive"}
                     onClick={() => {
-                      setActiveTab("students");
-                      window.location.hash = "students";
+                      setActiveTab("students")
+                      window.location.hash = "students"
                     }}
                     className="cursor-pointer 
              focus:bg-white 
@@ -531,29 +552,11 @@ export default function AdminPage() {
              data-[state=active]:bg-white 
              data-[state=active]:text-black 
              data-[state=inactive]:text-gray-500"
-                    value="notifications"
-                    data-state={activeTab === "notifications" ? "active" : "inactive"}
-                    onClick={() => {
-                      setActiveTab("notifications");
-                      window.location.hash = "notifications";
-                    }}
-                  >
-                    Notifications
-                    {pendingStudents.length > 0 && (
-                      <Badge className="ml-2 bg-red-500 text-white">{pendingStudents.length}</Badge>
-                    )}
-                  </TabsTrigger>
-
-                  <TabsTrigger
-                    className="cursor-pointer px-3 py-1 rounded-md transition-all 
-             data-[state=active]:bg-white 
-             data-[state=active]:text-black 
-             data-[state=inactive]:text-gray-500"
                     value="announcements"
                     data-state={activeTab === "announcements" ? "active" : "inactive"}
                     onClick={() => {
-                      setActiveTab("announcements");
-                      window.location.hash = "announcements";
+                      setActiveTab("announcements")
+                      window.location.hash = "announcements"
                     }}
                   >
                     Announcements
@@ -567,13 +570,12 @@ export default function AdminPage() {
                     value="admin"
                     data-state={activeTab === "admin" ? "active" : "inactive"}
                     onClick={() => {
-                      setActiveTab("admin");
-                      window.location.hash = "admin";
+                      setActiveTab("admin")
+                      window.location.hash = "admin"
                     }}
                   >
                     Admin Profile
                   </TabsTrigger>
-
                 </TabsList>
               </div>
 
@@ -589,8 +591,6 @@ export default function AdminPage() {
         </header>
 
         <main className="container p-6 lg:p-10">
-
-
           {error && (
             <div className="mb-6 p-3 bg-amber-50 border border-amber-200 text-amber-700 text-sm rounded-md">
               {error}
@@ -605,8 +605,8 @@ export default function AdminPage() {
                 value="students"
                 data-state={activeTab === "students" ? "active" : "inactive"}
                 onClick={() => {
-                  setActiveTab("students");
-                  window.location.hash = "students";
+                  setActiveTab("students")
+                  window.location.hash = "students"
                 }}
               >
                 Students
@@ -616,8 +616,8 @@ export default function AdminPage() {
                 value="notifications"
                 data-state={activeTab === "notifications" ? "active" : "inactive"}
                 onClick={() => {
-                  setActiveTab("notifications");
-                  window.location.hash = "notifications";
+                  setActiveTab("notifications")
+                  window.location.hash = "notifications"
                 }}
               >
                 Notifications
@@ -630,8 +630,8 @@ export default function AdminPage() {
                 value="announcements"
                 data-state={activeTab === "announcements" ? "active" : "inactive"}
                 onClick={() => {
-                  setActiveTab("announcements");
-                  window.location.hash = "announcements";
+                  setActiveTab("announcements")
+                  window.location.hash = "announcements"
                 }}
               >
                 Announcements
@@ -641,8 +641,8 @@ export default function AdminPage() {
                 value="admin"
                 data-state={activeTab === "admin" ? "active" : "inactive"}
                 onClick={() => {
-                  setActiveTab("admin");
-                  window.location.hash = "admin";
+                  setActiveTab("admin")
+                  window.location.hash = "admin"
                 }}
               >
                 Admin Profile
@@ -657,7 +657,9 @@ export default function AdminPage() {
                 <Card className="bg-gray-100 border-slate-200">
                   <CardHeader>
                     <CardTitle className="text-slate-800">Student Management</CardTitle>
-                    <CardDescription className="text-slate-600">View and manage all registered students</CardDescription>
+                    <CardDescription className="text-slate-600">
+                      View and manage all registered students
+                    </CardDescription>
                     <div className="flex gap-3 items-center">
                       <div className="flex items-center border rounded-lg py-2 w-[350px] h-[40px] px-4 shadow-md">
                         <BsSearch className="text-gray-600 mr-2 text-lg" />
@@ -690,20 +692,20 @@ export default function AdminPage() {
                                 <span>All Students</span>
                                 {filterType === "all" && <BsCheck className="h-4 w-4" />}
                               </button>
-                              
+
                               {/* Batch filter submenu */}
                               <div className="relative group">
                                 <button
                                   className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 w-full text-left flex items-center justify-between"
                                   onClick={(e) => {
-                                    e.stopPropagation();
-                                    setActiveDrowdown(activeDrowdown === "batch" ? null : "batch");
+                                    e.stopPropagation()
+                                    setActiveDrowdown(activeDrowdown === "batch" ? null : "batch")
                                   }}
                                 >
                                   <span>Batch</span>
                                   <BsChevronRight className="h-4 w-4" />
                                 </button>
-                                
+
                                 {activeDrowdown === "batch" && (
                                   <div className="absolute left-full top-0 w-48 bg-white border border-gray-200 rounded-md shadow-lg">
                                     {uniqueBatches.map((batch) => (
@@ -721,20 +723,20 @@ export default function AdminPage() {
                                   </div>
                                 )}
                               </div>
-                              
+
                               {/* Branch filter submenu */}
                               <div className="relative group">
                                 <button
                                   className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 w-full text-left flex items-center justify-between"
                                   onClick={(e) => {
-                                    e.stopPropagation();
-                                    setActiveDrowdown(activeDrowdown === "branch" ? null : "branch");
+                                    e.stopPropagation()
+                                    setActiveDrowdown(activeDrowdown === "branch" ? null : "branch")
                                   }}
                                 >
                                   <span>Branch</span>
                                   <BsChevronRight className="h-4 w-4" />
                                 </button>
-                                
+
                                 {activeDrowdown === "branch" && (
                                   <div className="absolute left-full top-0 w-48 bg-white border border-gray-200 rounded-md shadow-lg">
                                     {uniqueBranches.map((branch) => (
@@ -752,20 +754,20 @@ export default function AdminPage() {
                                   </div>
                                 )}
                               </div>
-                              
+
                               {/* Status filter submenu */}
                               <div className="relative group">
                                 <button
                                   className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 w-full text-left flex items-center justify-between"
                                   onClick={(e) => {
-                                    e.stopPropagation();
-                                    setActiveDrowdown(activeDrowdown === "status" ? null : "status");
+                                    e.stopPropagation()
+                                    setActiveDrowdown(activeDrowdown === "status" ? null : "status")
                                   }}
                                 >
                                   <span>Status</span>
                                   <BsChevronRight className="h-4 w-4" />
                                 </button>
-                                
+
                                 {activeDrowdown === "status" && (
                                   <div className="absolute left-full top-0 w-48 bg-white border border-gray-200 rounded-md shadow-lg">
                                     {statusOptions.map((status) => (
@@ -784,37 +786,35 @@ export default function AdminPage() {
                                 )}
                               </div>
                             </div>
-                            
+
                             <div className="py-1">
                               {/* Sort options header */}
                               <div className="px-4 py-2 text-xs text-gray-500">Sort by</div>
-                              
+
                               {/* Sort options */}
                               <button
                                 className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 w-full text-left flex items-center justify-between"
                                 onClick={() => handleSort("name")}
                               >
                                 <span>Name</span>
-                                {sortField === "name" && (
-                                  sortOrder === "asc" ? (
+                                {sortField === "name" &&
+                                  (sortOrder === "asc" ? (
                                     <BsArrowUp className="h-4 w-4" />
                                   ) : (
                                     <BsArrowDown className="h-4 w-4" />
-                                  )
-                                )}
+                                  ))}
                               </button>
                               <button
                                 className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 w-full text-left flex items-center justify-between"
                                 onClick={() => handleSort("branch")}
                               >
                                 <span>Branch</span>
-                                {sortField === "branch" && (
-                                  sortOrder === "asc" ? (
+                                {sortField === "branch" &&
+                                  (sortOrder === "asc" ? (
                                     <BsArrowUp className="h-4 w-4" />
                                   ) : (
                                     <BsArrowDown className="h-4 w-4" />
-                                  )
-                                )}
+                                  ))}
                               </button>
                             </div>
                           </div>
@@ -847,7 +847,9 @@ export default function AdminPage() {
                                   <TableCell className="font-medium">
                                     <div className="flex items-center space-x-3">
                                       <Avatar className="h-8 w-8">
-                                        <AvatarFallback className={`flex items-center justify-center text-sm font-bold text-slate-800 ${getAvatarColor(student.name)}`}>
+                                        <AvatarFallback
+                                          className={`flex items-center justify-center text-sm font-bold text-slate-800 ${getAvatarColor(student.name)}`}
+                                        >
                                           {getInitials(student.name)}
                                         </AvatarFallback>
                                       </Avatar>
@@ -875,10 +877,13 @@ export default function AdminPage() {
                                               : "bg-red-100 text-red-800"
                                       }
                                     >
-                                      {student.status === "approved" ? "Approved" :
-                                       student.status === "pending" ? "Pending" :
-                                       student.status === "kyc" ? "KYC Required" :
-                                       "Blocked"}
+                                      {student.status === "approved"
+                                        ? "Approved"
+                                        : student.status === "pending"
+                                          ? "Pending"
+                                          : student.status === "kyc"
+                                            ? "KYC Required"
+                                            : "Blocked"}
                                     </Badge>
                                   </TableCell>
                                   <TableCell>
@@ -931,21 +936,21 @@ export default function AdminPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuItem onClick={() => handleSort('name')} className="cursor-pointer">
-                            Name {filterType === 'name' && (filterType === 'asc' ? '↑' : '↓')}
+                          <DropdownMenuItem onClick={() => handleSort("name")} className="cursor-pointer">
+                            Name {filterType === "name" && (filterType === "asc" ? "↑" : "↓")}
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleSort('rollNo')} className="cursor-pointer">
-                            Roll No {filterType === 'rollNo' && (filterType === 'asc' ? '↑' : '↓')}
+                          <DropdownMenuItem onClick={() => handleSort("rollNo")} className="cursor-pointer">
+                            Roll No {filterType === "rollNo" && (filterType === "asc" ? "↑" : "↓")}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => handleSort('batch')} className="cursor-pointer">
-                            Batch {filterType === 'batch' && (filterType === 'asc' ? '↑' : '↓')}
+                          <DropdownMenuItem onClick={() => handleSort("batch")} className="cursor-pointer">
+                            Batch {filterType === "batch" && (filterType === "asc" ? "↑" : "↓")}
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleSort('branch')} className="cursor-pointer">
-                            Branch {filterType === 'branch' && (filterType === 'asc' ? '↑' : '↓')}
+                          <DropdownMenuItem onClick={() => handleSort("branch")} className="cursor-pointer">
+                            Branch {filterType === "branch" && (filterType === "asc" ? "↑" : "↓")}
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleSort('createdAt')} className="cursor-pointer">
-                            Registration Date {filterType === 'createdAt' && (filterType === 'asc' ? '↑' : '↓')}
+                          <DropdownMenuItem onClick={() => handleSort("createdAt")} className="cursor-pointer">
+                            Registration Date {filterType === "createdAt" && (filterType === "asc" ? "↑" : "↓")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -996,24 +1001,24 @@ export default function AdminPage() {
                                 </TableCell>
                                 <TableCell>
                                   <div className="flex space-x-2">
-                                    <Button 
-                                      className="cursor-pointer bg-green-600 hover:bg-green-700" 
+                                    <Button
+                                      className="cursor-pointer bg-green-600 hover:bg-green-700"
                                       size="sm"
-                                      onClick={() => handleStatusChange(student._id, 'approved')}
+                                      onClick={() => handleStatusChange(student._id, "approved")}
                                     >
                                       Approve
                                     </Button>
-                                    <Button 
-                                      className="cursor-pointer bg-blue-600 hover:bg-blue-700" 
+                                    <Button
+                                      className="cursor-pointer bg-blue-600 hover:bg-blue-700"
                                       size="sm"
-                                      onClick={() => handleStatusChange(student._id, 'kyc')}
+                                      onClick={() => handleStatusChange(student._id, "kyc")}
                                     >
                                       KYC
                                     </Button>
-                                    <Button 
-                                      className="cursor-pointer bg-red-600 hover:bg-red-700" 
+                                    <Button
+                                      className="cursor-pointer bg-red-600 hover:bg-red-700"
                                       size="sm"
-                                      onClick={() => handleStatusChange(student._id, 'block')}
+                                      onClick={() => handleStatusChange(student._id, "block")}
                                     >
                                       Block
                                     </Button>
@@ -1041,7 +1046,9 @@ export default function AdminPage() {
                     <div className="flex flex-col md:flex-row gap-8">
                       <div className="flex flex-col items-center space-y-4">
                         <Avatar className="h-32 w-32 border-4 border-slate-200">
-                          <AvatarFallback className={`flex items-center justify-center text-2xl font-bold text-slate-800 ${getAvatarColor(adminProfile.name)}`}>
+                          <AvatarFallback
+                            className={`flex items-center justify-center text-2xl font-bold text-slate-800 ${getAvatarColor(adminProfile.name)}`}
+                          >
                             {getInitials(adminProfile.name)}
                           </AvatarFallback>
                         </Avatar>
@@ -1053,7 +1060,12 @@ export default function AdminPage() {
                             <Label htmlFor="adminName" className="text-slate-700">
                               Name
                             </Label>
-                            <Input id="adminName" value={adminProfile.name} readOnly className="bg-slate-50 border-slate-200" />
+                            <Input
+                              id="adminName"
+                              value={adminProfile.name}
+                              readOnly
+                              className="bg-slate-50 border-slate-200"
+                            />
                           </div>
                           <div>
                             <Label htmlFor="adminEmail" className="text-slate-700">
@@ -1070,7 +1082,12 @@ export default function AdminPage() {
                             <Label htmlFor="adminRole" className="text-slate-700">
                               Role
                             </Label>
-                            <Input id="adminRole" value={adminProfile.role} readOnly className="bg-slate-50 border-slate-200" />
+                            <Input
+                              id="adminRole"
+                              value={adminProfile.role}
+                              readOnly
+                              className="bg-slate-50 border-slate-200"
+                            />
                           </div>
                           <div>
                             <Label htmlFor="adminJoined" className="text-slate-700">
@@ -1089,8 +1106,12 @@ export default function AdminPage() {
                           <h3 className="text-lg font-medium text-slate-800 mb-4">Admin Privileges</h3>
                           <div className="space-y-2">
                             <div className="flex items-center space-x-2">
-                              <Badge className="bg-white hover:text-white py-1 text-slate-800">Student Management</Badge>
-                              <Badge className="bg-white hover:text-white py-1 text-slate-800">Content Management</Badge>
+                              <Badge className="bg-white hover:text-white py-1 text-slate-800">
+                                Student Management
+                              </Badge>
+                              <Badge className="bg-white hover:text-white py-1 text-slate-800">
+                                Content Management
+                              </Badge>
                               <Badge className="bg-white hover:text-white py-1 text-slate-800">System Settings</Badge>
                             </div>
                           </div>
@@ -1110,9 +1131,11 @@ export default function AdminPage() {
                       <Megaphone className="mr-2 h-5 w-5" />
                       Announcements
                     </CardTitle>
-                    <CardDescription className="text-slate-600">Create and manage announcements for students</CardDescription>
+                    <CardDescription className="text-slate-600">
+                      Create and manage announcements for students
+                    </CardDescription>
                   </CardHeader>
-                  
+
                   <CardContent>
                     <form onSubmit={handleAnnouncementSubmit} className="space-y-4">
                       <div className="space-y-2">
@@ -1123,12 +1146,12 @@ export default function AdminPage() {
                           id="announcementTitle"
                           placeholder="Enter announcement title"
                           value={newAnnouncement.title}
-                          onChange={(e) => setNewAnnouncement({...newAnnouncement, title: e.target.value})}
+                          onChange={(e) => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })}
                           className="border-slate-200 focus:border-slate-500"
                           required
                         />
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label htmlFor="announcementMessage" className="text-slate-700">
                           Announcement Message
@@ -1137,19 +1160,19 @@ export default function AdminPage() {
                           id="announcementMessage"
                           placeholder="Enter your announcement message here"
                           value={newAnnouncement.message}
-                          onChange={(e) => setNewAnnouncement({...newAnnouncement, message: e.target.value})}
+                          onChange={(e) => setNewAnnouncement({ ...newAnnouncement, message: e.target.value })}
                           className="min-h-[100px] border-slate-200 focus:border-slate-500"
                           required
                         />
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label htmlFor="announcementType" className="text-slate-700">
                           Announcement Type
                         </Label>
                         <Select
                           value={newAnnouncement.type}
-                          onValueChange={(value) => setNewAnnouncement({...newAnnouncement, type: value})}
+                          onValueChange={(value) => setNewAnnouncement({ ...newAnnouncement, type: value })}
                         >
                           <SelectTrigger className="border-slate-200">
                             <SelectValue placeholder="Select announcement type" />
@@ -1162,7 +1185,7 @@ export default function AdminPage() {
                           </SelectContent>
                         </Select>
                       </div>
-                      
+
                       <Button
                         type="submit"
                         className="cursor-pointer bg-slate-800 hover:bg-slate-700"
@@ -1171,10 +1194,10 @@ export default function AdminPage() {
                         {announcementLoading ? "Creating..." : "Create Announcement"}
                       </Button>
                     </form>
-                    
+
                     <div className="mt-8">
                       <h3 className="text-lg font-medium text-slate-800 mb-4">Current Announcements</h3>
-                      
+
                       {announcements.length === 0 ? (
                         <div className="text-center py-8 text-slate-500">
                           <p>No announcements have been created yet</p>
@@ -1182,21 +1205,28 @@ export default function AdminPage() {
                       ) : (
                         <div className="space-y-4">
                           {announcements.map((announcement) => (
-                            <div 
-                              key={announcement._id} 
+                            <div
+                              key={announcement._id}
                               className={`p-4 rounded-md border ${
-                                announcement.type === 'info' ? 'bg-blue-50 border-blue-200' :
-                                announcement.type === 'warning' ? 'bg-amber-50 border-amber-200' :
-                                announcement.type === 'success' ? 'bg-green-50 border-green-200' :
-                                'bg-red-50 border-red-200'
+                                announcement.type === "info"
+                                  ? "bg-blue-50 border-blue-200"
+                                  : announcement.type === "warning"
+                                    ? "bg-amber-50 border-amber-200"
+                                    : announcement.type === "success"
+                                      ? "bg-green-50 border-green-200"
+                                      : "bg-red-50 border-red-200"
                               }`}
                             >
                               <div className="flex justify-between items-start">
                                 <div className="flex items-center">
-                                  {announcement.type === 'info' && <Info className="h-5 w-5 text-blue-500 mr-2" />}
-                                  {announcement.type === 'warning' && <AlertTriangle className="h-5 w-5 text-amber-500 mr-2" />}
-                                  {announcement.type === 'success' && <CheckCircle className="h-5 w-5 text-green-500 mr-2" />}
-                                  {announcement.type === 'error' && <X className="h-5 w-5 text-red-500 mr-2" />}
+                                  {announcement.type === "info" && <Info className="h-5 w-5 text-blue-500 mr-2" />}
+                                  {announcement.type === "warning" && (
+                                    <AlertTriangle className="h-5 w-5 text-amber-500 mr-2" />
+                                  )}
+                                  {announcement.type === "success" && (
+                                    <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+                                  )}
+                                  {announcement.type === "error" && <X className="h-5 w-5 text-red-500 mr-2" />}
                                   <h4 className="font-medium text-slate-800">{announcement.title}</h4>
                                 </div>
                                 <Button
@@ -1228,4 +1258,3 @@ export default function AdminPage() {
     </AuthCheck>
   )
 }
-
