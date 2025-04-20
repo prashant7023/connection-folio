@@ -36,7 +36,7 @@ export default function LoginPage() {
     
     try {
       // Send login request to backend
-      const response = await fetch('https://connection-folio-1.onrender.com/api/students/login', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API_URL || process.env.SERVER_API_URL}/api/students/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -111,7 +111,7 @@ export default function LoginPage() {
                 <div className="relative">
                   <AtSign className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
                   <Input
-                    id="email"
+                     id="email"
                     type="email"
                     placeholder="name@example.com"
                     className="pl-10 border-slate-200 focus:border-slate-500"

@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { isAdminLoggedIn, isStudentLoggedIn, getCurrentUser, getInitials, getAvatarColor } from "@/utils/auth"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { LogOut } from "lucide-react"
-import AuthCheck from "@/components/auth-check"
+import { LogOut, Megaphone } from 'lucide-react'
+import AnnouncementPopup from "@/components/announcement-popup"
+import { Button } from "@/components/ui/button"
 
 export default function Home() {
   const router = useRouter()
@@ -14,6 +15,8 @@ export default function Home() {
   const [currentUser, setCurrentUser] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [isStudent, setIsStudent] = useState(false)
+  const [showAnnouncementButton, setShowAnnouncementButton] = useState(false)
+  const [showAnnouncementPopup, setShowAnnouncementPopup] = useState(false)
 
   useEffect(() => {
     setIsClient(true)
@@ -27,6 +30,30 @@ export default function Home() {
 
     if (adminLoggedIn || studentLoggedIn) {
       setCurrentUser(getCurrentUser())
+    }
+
+    // Check if there are any announcements
+    try {
+      const fetchAnnouncements = async () => {
+        try {
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_SERVER_API_URL || process.env.SERVER_API_URL}/api/announcements`,
+          )
+
+          if (!response.ok) {
+            throw new Error("Failed to fetch announcements")
+          }
+
+          const data = await response.json()
+          setShowAnnouncementButton(data.length > 0)
+        } catch (err) {
+          console.error("Error checking announcements:", err)
+        }
+      }
+
+      fetchAnnouncements()
+    } catch (err) {
+      console.error("Error checking announcements:", err)
     }
   }, [])
 
@@ -53,14 +80,25 @@ export default function Home() {
           <>
             {currentUser ? (
               <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                </div>
+                {showAnnouncementButton && isStudent && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="relative"
+                    onClick={() => setShowAnnouncementPopup(true)}
+                  >
+                    <Megaphone className="h-5 w-5" />
+                    <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
+                  </Button>
+                )}
                 <Link
                   href={isAdmin ? "/admin" : "/profile"}
                   className="gap-2 inline-flex items-center justify-center rounded-md text-slate-700 border border-slate-300 hover:bg-slate-100 px-3 py-1 text-sm"
                 >
                   <Avatar className="h-6 w-6">
-                    <AvatarFallback className={`flex items-center justify-center text-sm font-bold text-slate-800 ${getAvatarColor(currentUser.name)}`}>
+                    <AvatarFallback
+                      className={`flex items-center justify-center text-sm font-bold text-slate-800 ${getAvatarColor(currentUser.name)}`}
+                    >
                       {getInitials(currentUser.name)}
                     </AvatarFallback>
                   </Avatar>
@@ -120,9 +158,7 @@ export default function Home() {
 
           {isClient && currentUser && (
             <div className="flex flex-col items-center gap-4 mt-8">
-              <p className="text-slate-700">
-                You are logged in as {isAdmin ? "an administrator" : "a student"}.
-              </p>
+              <p className="text-slate-700">You are logged in as {isAdmin ? "an administrator" : "a student"}.</p>
               <Link
                 href={isAdmin ? "/admin" : "/profile"}
                 className="inline-flex items-center justify-center rounded-md text-white bg-slate-800 hover:bg-slate-700 px-8 py-3 text-lg"
@@ -136,7 +172,9 @@ export default function Home() {
       <footer className="py-6 text-center text-slate-600 border-t border-slate-200">
         <p>© {new Date().getFullYear()} Connection-Folio. All rights reserved.</p>
       </footer>
+
+      {/* Display announcement popup if shown */}
+      {showAnnouncementPopup && <AnnouncementPopup onClose={() => setShowAnnouncementPopup(false)} />}
     </div>
   )
 }
-

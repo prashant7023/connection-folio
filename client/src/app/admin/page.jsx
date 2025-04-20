@@ -4,23 +4,31 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Search, LogOut, ChevronDown, ArrowUpDown } from "lucide-react"
+import { Search, LogOut, ChevronDown, ArrowUpDown, Megaphone, Trash2, Info, AlertTriangle, CheckCircle, X } from "lucide-react"
 import { Navbar } from "@/components/navbar"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import Link from "next/link"
 import AuthCheck from "@/components/auth-check"
 import { getInitials, getAvatarColor } from "@/utils/auth"
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import { BsSearch, BsCheck, BsChevronRight, BsArrowUp, BsArrowDown } from "react-icons/bs"
 import { IoIosArrowDown, IoIosArrowForward } from "react-icons/io"
@@ -47,6 +55,15 @@ export default function AdminPage() {
   const [sortOrder, setSortOrder] = useState("asc")
   const [showDropdown, setShowDropdown] = useState(false)
   const [activeDrowdown, setActiveDrowdown] = useState(null)
+  
+  // Announcements state
+  const [announcements, setAnnouncements] = useState([])
+  const [newAnnouncement, setNewAnnouncement] = useState({
+    title: "",
+    message: "",
+    type: "info" // info, warning, success, error
+  })
+  const [announcementLoading, setAnnouncementLoading] = useState(false)
 
   // Check URL hash on page load to select the right tab
   useEffect(() => {
@@ -85,7 +102,7 @@ export default function AdminPage() {
         }
 
         // Fetch students from backend
-        const response = await fetch("https://connection-folio-1.onrender.com/api/students", {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API_URL || process.env.SERVER_API_URL}/api/students`, {
           headers: {
             "Authorization": `Bearer ${token}`
           }
@@ -104,7 +121,7 @@ export default function AdminPage() {
 
         // Also try to fetch admin profile
         try {
-          const profileResponse = await fetch("https://connection-folio-1.onrender.com/api/admins/profile", {
+          const profileResponse = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API_URL || process.env.SERVER_API_URL}/api/admins/profile`, {
             headers: {
               "Authorization": `Bearer ${token}`
             }
@@ -159,6 +176,34 @@ export default function AdminPage() {
     fetchStudents()
   }, [router])
 
+  // Load announcements from API on mount
+  useEffect(() => {
+    const fetchAnnouncements = async () => {
+      try {
+        const token = localStorage.getItem("admin_token");
+        if (!token) return;
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API_URL || process.env.SERVER_API_URL}/api/announcements/admin`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch announcements");
+        }
+
+        const data = await response.json();
+        setAnnouncements(data);
+      } catch (err) {
+        console.error("Error loading announcements:", err);
+        setAnnouncements([]);
+      }
+    };
+
+    fetchAnnouncements();
+  }, []);
+
   const handleLogout = () => {
     // Clear admin tokens and data
     localStorage.removeItem("admin_token")
@@ -178,7 +223,7 @@ export default function AdminPage() {
       
       console.log(`Updating student ${studentId} status to: ${newStatus}`);
       
-      const response = await fetch(`https://connection-folio-1.onrender.com/api/admins/students/${studentId}/status`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API_URL || process.env.SERVER_API_URL}/api/admins/students/${studentId}/status`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -225,7 +270,7 @@ export default function AdminPage() {
       
       console.log(`Changing student ${studentId} status to: ${newStatus}`);
       
-      const response = await fetch(`https://connection-folio-1.onrender.com/api/admins/students/${studentId}/status`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API_URL || process.env.SERVER_API_URL}/api/admins/students/${studentId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -361,6 +406,96 @@ export default function AdminPage() {
     return 0;
   });
 
+  // Handle creating a new announcement
+  const handleAnnouncementSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!newAnnouncement.title || !newAnnouncement.message) {
+      setError("Title and message are required for announcements");
+      return;
+    }
+    
+    setAnnouncementLoading(true);
+    
+    try {
+      const token = localStorage.getItem("admin_token");
+      if (!token) {
+        router.push("/admin/login");
+        return;
+      }
+      
+      // Send the announcement to the API
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API_URL || process.env.SERVER_API_URL}/api/announcements`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title: newAnnouncement.title,
+          message: newAnnouncement.message,
+          type: newAnnouncement.type
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create announcement');
+      }
+      
+      // Get the created announcement
+      const createdAnnouncement = await response.json();
+      
+      // Update state with the new announcement
+      setAnnouncements([createdAnnouncement, ...announcements]);
+      
+      // Reset form
+      setNewAnnouncement({
+        title: "",
+        message: "",
+        type: "info"
+      });
+      
+      // Show confirmation
+      setError("");
+    } catch (err) {
+      console.error("Error creating announcement:", err);
+      setError("Failed to create announcement. Please try again.");
+    } finally {
+      setAnnouncementLoading(false);
+    }
+  };
+
+  // Handle deleting an announcement
+  const handleDeleteAnnouncement = async (id) => {
+    try {
+      const token = localStorage.getItem("admin_token");
+      if (!token) {
+        router.push("/admin/login");
+        return;
+      }
+      
+      // Delete the announcement via API
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_API_URL || process.env.SERVER_API_URL}/api/announcements/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete announcement');
+      }
+      
+      // Update state by filtering out the deleted announcement
+      setAnnouncements(announcements.filter(a => a._id !== id));
+    } catch (err) {
+      console.error("Error deleting announcement:", err);
+      setError("Failed to delete announcement. Please try again.");
+    }
+  };
+
   return (
     <AuthCheck requireAuth adminOnly>
       <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
@@ -407,6 +542,21 @@ export default function AdminPage() {
                     {pendingStudents.length > 0 && (
                       <Badge className="ml-2 bg-red-500 text-white">{pendingStudents.length}</Badge>
                     )}
+                  </TabsTrigger>
+
+                  <TabsTrigger
+                    className="cursor-pointer px-3 py-1 rounded-md transition-all 
+             data-[state=active]:bg-white 
+             data-[state=active]:text-black 
+             data-[state=inactive]:text-gray-500"
+                    value="announcements"
+                    data-state={activeTab === "announcements" ? "active" : "inactive"}
+                    onClick={() => {
+                      setActiveTab("announcements");
+                      window.location.hash = "announcements";
+                    }}
+                  >
+                    Announcements
                   </TabsTrigger>
 
                   <TabsTrigger
@@ -474,6 +624,17 @@ export default function AdminPage() {
                 {pendingStudents.length > 0 && (
                   <Badge className="ml-2 bg-red-500 text-white">{pendingStudents.length}</Badge>
                 )}
+              </TabsTrigger>
+              <TabsTrigger
+                className="cursor-pointer flex-grow"
+                value="announcements"
+                data-state={activeTab === "announcements" ? "active" : "inactive"}
+                onClick={() => {
+                  setActiveTab("announcements");
+                  window.location.hash = "announcements";
+                }}
+              >
+                Announcements
               </TabsTrigger>
               <TabsTrigger
                 className="cursor-pointer flex-grow"
@@ -935,6 +1096,127 @@ export default function AdminPage() {
                           </div>
                         </div>
                       </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {activeTab === "announcements" && (
+              <div className="mt-6">
+                <Card className="bg-white border-slate-200">
+                  <CardHeader>
+                    <CardTitle className="text-slate-800 flex items-center">
+                      <Megaphone className="mr-2 h-5 w-5" />
+                      Announcements
+                    </CardTitle>
+                    <CardDescription className="text-slate-600">Create and manage announcements for students</CardDescription>
+                  </CardHeader>
+                  
+                  <CardContent>
+                    <form onSubmit={handleAnnouncementSubmit} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="announcementTitle" className="text-slate-700">
+                          Announcement Title
+                        </Label>
+                        <Input
+                          id="announcementTitle"
+                          placeholder="Enter announcement title"
+                          value={newAnnouncement.title}
+                          onChange={(e) => setNewAnnouncement({...newAnnouncement, title: e.target.value})}
+                          className="border-slate-200 focus:border-slate-500"
+                          required
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="announcementMessage" className="text-slate-700">
+                          Announcement Message
+                        </Label>
+                        <Textarea
+                          id="announcementMessage"
+                          placeholder="Enter your announcement message here"
+                          value={newAnnouncement.message}
+                          onChange={(e) => setNewAnnouncement({...newAnnouncement, message: e.target.value})}
+                          className="min-h-[100px] border-slate-200 focus:border-slate-500"
+                          required
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="announcementType" className="text-slate-700">
+                          Announcement Type
+                        </Label>
+                        <Select
+                          value={newAnnouncement.type}
+                          onValueChange={(value) => setNewAnnouncement({...newAnnouncement, type: value})}
+                        >
+                          <SelectTrigger className="border-slate-200">
+                            <SelectValue placeholder="Select announcement type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="info">Information</SelectItem>
+                            <SelectItem value="warning">Warning</SelectItem>
+                            <SelectItem value="success">Success</SelectItem>
+                            <SelectItem value="error">Error</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <Button
+                        type="submit"
+                        className="cursor-pointer bg-slate-800 hover:bg-slate-700"
+                        disabled={announcementLoading}
+                      >
+                        {announcementLoading ? "Creating..." : "Create Announcement"}
+                      </Button>
+                    </form>
+                    
+                    <div className="mt-8">
+                      <h3 className="text-lg font-medium text-slate-800 mb-4">Current Announcements</h3>
+                      
+                      {announcements.length === 0 ? (
+                        <div className="text-center py-8 text-slate-500">
+                          <p>No announcements have been created yet</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {announcements.map((announcement) => (
+                            <div 
+                              key={announcement._id} 
+                              className={`p-4 rounded-md border ${
+                                announcement.type === 'info' ? 'bg-blue-50 border-blue-200' :
+                                announcement.type === 'warning' ? 'bg-amber-50 border-amber-200' :
+                                announcement.type === 'success' ? 'bg-green-50 border-green-200' :
+                                'bg-red-50 border-red-200'
+                              }`}
+                            >
+                              <div className="flex justify-between items-start">
+                                <div className="flex items-center">
+                                  {announcement.type === 'info' && <Info className="h-5 w-5 text-blue-500 mr-2" />}
+                                  {announcement.type === 'warning' && <AlertTriangle className="h-5 w-5 text-amber-500 mr-2" />}
+                                  {announcement.type === 'success' && <CheckCircle className="h-5 w-5 text-green-500 mr-2" />}
+                                  {announcement.type === 'error' && <X className="h-5 w-5 text-red-500 mr-2" />}
+                                  <h4 className="font-medium text-slate-800">{announcement.title}</h4>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-slate-500 hover:text-red-500"
+                                  onClick={() => handleDeleteAnnouncement(announcement._id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                              <p className="mt-2 text-sm text-slate-600">{announcement.message}</p>
+                              <div className="mt-2 flex justify-between text-xs text-slate-500">
+                                <span>Created by: {announcement.creatorName}</span>
+                                <span>{new Date(announcement.createdAt).toLocaleString()}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
