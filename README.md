@@ -5,6 +5,7 @@ Student profile management system with email notifications for account status ch
 ## Setup Instructions
 
 ### Prerequisites
+- Next.js
 - Node.js (v14+)
 - MongoDB (local or Atlas)
 - Git
