@@ -84,6 +84,15 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Invalid credentials' });
     }
 
+    // Check student status - prevent blocked students from logging in
+    if (student.status === 'block') {
+      console.log(`🚫 Blocked student login attempt: ${student.email}`);
+      return res.status(403).json({ 
+        error: 'Your account has been blocked. Please contact the administrator for assistance.',
+        blocked: true
+      });
+    }
+
     // Generate token
     const token = jwt.sign(
       { id: student._id, email: student.email },

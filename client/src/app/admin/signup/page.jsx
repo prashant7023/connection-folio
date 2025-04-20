@@ -93,7 +93,7 @@ export default function AdminSignupPage() {
       localStorage.setItem('admin_token', data.token)
       localStorage.setItem('adminProfile', JSON.stringify(data.admin))
       
-      router.push('/admin')
+      router.push('/')
     } catch (err) {
       console.error('Registration error:', err)
       setError(err.message || 'Registration failed')

@@ -74,7 +74,7 @@ export default function SignupPage() {
       localStorage.setItem('studentProfile', JSON.stringify(studentProfile))
       
       // Redirect to profile page
-      router.push('/profile')
+      router.push('/')
     } catch (err) {
       console.error('Registration error:', err)
       setError(err.message || 'Registration failed. Please try again.')

@@ -45,7 +45,7 @@ export default function AdminLoginPage() {
       localStorage.setItem('adminProfile', JSON.stringify(adminProfile))
       
       // Redirect to admin dashboard
-      router.push('/admin')
+      router.push('/')
     } catch (err) {
       console.error('Admin login error:', err)
       setError(err.message || 'Login failed. Please check your credentials.')

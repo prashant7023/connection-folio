@@ -1,12 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { AtSign, Lock } from "lucide-react"
+import { AtSign, Lock, AlertTriangle } from "lucide-react"
 import AuthCheck from "@/components/auth-check"
 
 export default function LoginPage() {
@@ -14,11 +14,24 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
+  const [isBlocked, setIsBlocked] = useState(false)
   const [loading, setLoading] = useState(false)
+  
+  // Check for messages in localStorage on component mount
+  useEffect(() => {
+    const message = localStorage.getItem("loginMessage");
+    if (message) {
+      setError(message);
+      setIsBlocked(true);
+      // Clear the message after displaying it
+      localStorage.removeItem("loginMessage");
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError("")
+    setIsBlocked(false)
     setLoading(true)
     
     try {
@@ -34,6 +47,11 @@ export default function LoginPage() {
       const data = await response.json()
       
       if (!response.ok) {
+        // Check if the account is blocked
+        if (response.status === 403 && data.blocked) {
+          setIsBlocked(true);
+          throw new Error(data.error || 'Your account has been blocked. Please contact the administrator.');
+        }
         throw new Error(data.error || 'Login failed')
       }
       
@@ -45,7 +63,7 @@ export default function LoginPage() {
       localStorage.setItem('studentProfile', JSON.stringify(studentProfile))
       
       // Redirect to profile page
-      router.push('/profile')
+      router.push('/')
     } catch (err) {
       console.error('Login error:', err)
       setError(err.message || 'Login failed. Please check your credentials.')
@@ -66,11 +84,25 @@ export default function LoginPage() {
           </CardHeader>
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
-              {error && (
+              {isBlocked ? (
+                <div className="p-5 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm rounded-md">
+                  <div className="flex items-center mb-2">
+                    <AlertTriangle className="h-5 w-5 mr-2" />
+                    <h3 className="font-bold">Account Blocked</h3>
+                  </div>
+                  <p>{error}</p>
+                  <p className="mt-2">
+                    If you believe this is an error, please contact your administrator at:
+                    <a href="mailto:admin@connectionfolio.com" className="block mt-1 font-bold underline">
+                      admin@connectionfolio.com
+                    </a>
+                  </p>
+                </div>
+              ) : error ? (
                 <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-md">
                   {error}
                 </div>
-              )}
+              ) : null}
               
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-slate-700">

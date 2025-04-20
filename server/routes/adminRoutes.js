@@ -170,7 +170,7 @@ router.get('/profile', adminAuth, async (req, res) => {
 router.put('/students/:id/status', adminAuth, async (req, res) => {
   try {
     const { status } = req.body;
-    if (!['active', 'inactive', 'pending'].includes(status)) {
+    if (!['approved', 'pending', 'kyc', 'block'].includes(status)) {
       return res.status(400).json({ error: 'Invalid status value' });
     }
 

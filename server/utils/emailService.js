@@ -11,7 +11,6 @@ const transporter = nodemailer.createTransport({
 });
 
 /**
- * Send email to admin about new student registration
  * @param {Object} studentData - The student data from registration
  * @param {String} adminEmail - The admin email to send notification to
  * @returns {Promise} - Email sending result
@@ -23,9 +22,10 @@ const sendNewStudentNotification = async (studentData, adminEmail) => {
     // Get status color
     const getStatusColor = (status) => {
       switch(status) {
-        case 'active': return '#4CAF50';
+        case 'approved': return '#4CAF50';
         case 'pending': return '#FF9800';
-        case 'inactive': return '#F44336';
+        case 'kyc': return '#2196F3';
+        case 'block': return '#F44336';
         default: return '#757575';
       }
     };
@@ -206,19 +206,19 @@ const sendStudentApprovalEmail = async (studentData) => {
     // Get status details
     const getStatusDetails = (status) => {
       switch(status) {
-        case 'active': 
+        case 'approved': 
           return {
             color: '#4CAF50',
             icon: '✅',
             title: 'Account Approved',
             message: 'Your account has been approved. You can now log in and access all features.'
           };
-        case 'inactive': 
+        case 'block': 
           return {
             color: '#F44336',
             icon: '❌',
-            title: 'Account Rejected',
-            message: 'Your account has been rejected. Please contact the administration for more information.'
+            title: 'Account Blocked',
+            message: 'Your account has been blocked. Please contact the administration for more information.'
           };
         case 'pending':
           return {
@@ -226,6 +226,13 @@ const sendStudentApprovalEmail = async (studentData) => {
             icon: '⏳',
             title: 'Account Pending',
             message: 'Your account is pending review. We will notify you when it is approved.'
+          };
+        case 'kyc':
+          return {
+            color: '#2196F3',
+            icon: '🔍',
+            title: 'KYC Verification Required',
+            message: 'Your account requires KYC verification. Please provide the necessary documentation to complete the process.'
           };
         default: 
           return {
@@ -381,8 +388,12 @@ const sendStudentApprovalEmail = async (studentData) => {
     const mailOptions = {
       from: `"Connection Folio System" <${process.env.GMAIL_USER}>`,
       to: studentData.email,
-      subject: `🎓 Your Connection Folio Account is ${studentData.status === 'active' ? 'Approved' : 
-                 studentData.status === 'inactive' ? 'Rejected' : 'Updated'}`,
+      subject: `🎓 Your Connection Folio Account is ${
+        studentData.status === 'approved' ? 'Approved' : 
+        studentData.status === 'pending' ? 'Pending Review' :
+        studentData.status === 'kyc' ? 'Awaiting KYC Verification' :
+        studentData.status === 'block' ? 'Blocked' : 'Updated'
+      }`,
       html: emailContent,
     };
 

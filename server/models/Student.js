@@ -10,7 +10,7 @@ const studentSchema = new mongoose.Schema({
     bio: { type: String, default: "" },
     skills: { type: String, default: "" },
     interests: { type: String, default: "" },
-    status: { type: String, enum: ['active', 'pending', 'inactive'], default: 'pending' },
+    status: { type: String, enum: ['approved', 'pending', 'kyc', 'block'], default: 'pending' },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
 }, {

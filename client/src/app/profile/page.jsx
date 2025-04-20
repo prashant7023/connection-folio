@@ -78,6 +78,19 @@ export default function ProfilePage() {
       
       const data = await response.json();
       
+      // Check if student is blocked, and if so, redirect to login
+      if (data.status === 'block') {
+        console.log("Account blocked, redirecting to login");
+        // Set a message in localStorage to be displayed on the login page
+        localStorage.setItem("loginMessage", "Your account has been blocked. Please contact the administrator.");
+        // Remove token and profile
+        localStorage.removeItem("token");
+        localStorage.removeItem("studentProfile");
+        // Redirect to login
+        router.push("/login");
+        return;
+      }
+      
       // Check if status changed from previous fetch
       if (prevStatus && prevStatus !== data.status) {
         setStatusChanged(true);
@@ -211,12 +224,14 @@ export default function ProfilePage() {
                     <p className="text-slate-600">{profile.batch}</p>
                     <div className="mt-2">
                       <Badge className={
-                        profile.status === "active" ? "bg-green-100 text-green-800" :
+                        profile.status === "approved" ? "bg-green-100 text-green-800" :
                         profile.status === "pending" ? "bg-yellow-100 text-yellow-800" :
+                        profile.status === "kyc" ? "bg-blue-100 text-blue-800" :
                         "bg-red-100 text-red-800"
                       }>
-                        {profile.status === "active" ? "Account Active" :
+                        {profile.status === "approved" ? "Account Active" :
                          profile.status === "pending" ? "Approval Pending" :
+                         profile.status === "kyc" ? "KYC Pending" :
                          "Account Inactive"}
                       </Badge>
                     </div>
@@ -303,14 +318,16 @@ export default function ProfilePage() {
                         <h3 className="text-lg font-medium text-slate-800 mb-2">Account Status</h3>
                         <div className="flex items-center">
                           <div className={`h-3 w-3 rounded-full mr-2 ${
-                            profile.status === "active" ? "bg-green-500" :
+                            profile.status === "approved" ? "bg-green-500" :
                             profile.status === "pending" ? "bg-yellow-500" :
+                            profile.status === "kyc" ? "bg-blue-500" :
                             "bg-red-500"
                           }`}></div>
                           <p className="text-slate-700">
-                            {profile.status === "active" ? "Your account is active" :
+                            {profile.status === "approved" ? "Your account is approved" :
                              profile.status === "pending" ? "Your account is pending approval" :
-                             "Your account is currently inactive"}
+                             profile.status === "kyc" ? "KYC verification required" :
+                             "Your account is blocked"}
                           </p>
                         </div>
                       </div>
@@ -338,9 +355,10 @@ export default function ProfilePage() {
           {statusChanged && (
             <div className="fixed top-20 right-4 bg-blue-500 text-white p-4 rounded-md shadow-lg z-50 animate-pulse">
               <p className="font-medium">Your account status has been updated!</p>
-              <p>New status: {profile.status === "active" ? "Active" : 
+              <p>New status: {profile.status === "approved" ? "Approved" : 
                              profile.status === "pending" ? "Pending Approval" : 
-                             "Inactive"}</p>
+                             profile.status === "kyc" ? "KYC Required" :
+                             "Blocked"}</p>
             </div>
           )}
         </main>
